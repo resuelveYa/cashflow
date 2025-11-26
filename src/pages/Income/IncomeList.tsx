@@ -171,11 +171,11 @@ const IncomeList = () => {
       <TableCell>
         <div className="text-right">
           <div className="font-medium text-green-600 dark:text-green-400">
-            {formatCurrency(income.ep_total)}
+            {formatCurrency(income.ep_total || 0)}
           </div>
           {income.total_amount !== income.ep_total && (
             <div className="text-sm text-gray-500">
-              Final: {formatCurrency(income.total_amount)}
+              Final: {formatCurrency(income.total_amount || 0)}
             </div>
           )}
         </div>
@@ -188,7 +188,7 @@ const IncomeList = () => {
       </TableCell>
       
       <TableCell>
-        {getStatusBadge(income.state)}
+        {getStatusBadge(income.state || '')}
       </TableCell>
       
       <TableCell>
@@ -403,7 +403,7 @@ const IncomeList = () => {
           <ComponentCard title="Total Ingresos" className="bg-white dark:bg-gray-800">
             <div className="flex flex-col items-center justify-center h-24">
               <p className="text-2xl font-bold text-green-500">
-                {formatCurrency(stats.montoTotal)}
+                {formatCurrency(stats.montoTotal || 0)}
               </p>
               <p className="text-sm text-gray-500">{stats.total} registros</p>
             </div>
@@ -421,7 +421,7 @@ const IncomeList = () => {
           <ComponentCard title="Pendientes" className="bg-white dark:bg-gray-800">
             <div className="flex flex-col items-center justify-center h-24">
               <p className="text-2xl font-bold text-yellow-600">
-                {stats.activo + stats.facturado}
+                {(stats.activo || 0) + (stats.facturado || 0)}
               </p>
               <p className="text-sm text-gray-500">Por cobrar</p>
             </div>

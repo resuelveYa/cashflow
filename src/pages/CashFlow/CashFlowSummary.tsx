@@ -1,8 +1,9 @@
 // src/pages/CashFlow/CashFlowSummary.tsx
 import React, { useState, useEffect } from 'react';
-// import ingresosApiService from '../../services/ingresosService'; // ELIMINADO
+import { incomeApiService } from '../../services/incomeService';
 import { formatCurrency } from '../../utils/formatters';
 import { CashFlowItem, CashFlowSummary as CashFlowSummaryData } from '../../services/cashFlowService';
+import { IncomeItem } from '../../types/income';
 
 interface CashFlowSummaryProps {
   summary: CashFlowSummaryData;
@@ -317,7 +318,7 @@ const DataTypeAnalysisCard: React.FC<{ items: CashFlowItem[], summary: CashFlowS
 const CashFlowSummary: React.FC<CashFlowSummaryProps> = ({ summary, items }) => {
   const [totalIncome, setTotalIncome] = useState<number>(0);
   const [isLoadingIncome, setIsLoadingIncome] = useState<boolean>(true);
-  const [recentIngresos, setRecentIngresos] = useState<any[]>([]);
+  const [recentIngresos, setRecentIngresos] = useState<IncomeItem[]>([]);
   const [isLoadingIngresos, setIsLoadingIngresos] = useState<boolean>(true);
 
   // Función para obtener el total de ingresos del servicio
@@ -326,13 +327,13 @@ const CashFlowSummary: React.FC<CashFlowSummaryProps> = ({ summary, items }) => 
       setIsLoadingIncome(true);
       console.log('🔍 CashFlowSummary - Fetching income stats...');
       
-      const response = await ingresosApiService.getIngresoStats();
+      const stats = await incomeApiService.getIncomeStats();
       
-      console.log('📊 CashFlowSummary - Response received:', response);
-      console.log('📊 CashFlowSummary - Response.data:', response.data);
-      console.log('📊 CashFlowSummary - Response.data.montoTotal:', response.data?.montoTotal);
+      console.log('📊 CashFlowSummary - Stats received:', stats);
+      console.log('📊 CashFlowSummary - Stats.montoTotal:', stats.montoTotal);
+      console.log('📊 CashFlowSummary - Stats.total_amount:', stats.total_amount);
       
-      const totalValue = response.data?.montoTotal || 0;
+      const totalValue = stats.montoTotal || stats.total_amount || 0;
       console.log('📊 CashFlowSummary - Final total value:', totalValue);
       
       setTotalIncome(totalValue);
@@ -350,24 +351,40 @@ const CashFlowSummary: React.FC<CashFlowSummaryProps> = ({ summary, items }) => 
       setIsLoadingIngresos(true);
       console.log('🔍 CashFlowSummary - Fetching recent ingresos...');
       
-      const response = await ingresosApiService.getIngresos({
+      const response = await incomeApiService.getIncomes({
         limit: 5,
         sortBy: 'date',
         sortDirection: 'desc'
       });
       
       console.log('📊 CashFlowSummary - Recent ingresos response:', response);
-      console.log('📊 CashFlowSummary - Response.data structure:', response.data);
-      console.log('📊 CashFlowSummary - First item structure:', response.data?.[0]);
+      console.log('📊 CashFlowSummary - Response.data:', response.data);
       
-      // Log all fields of the first item to see the exact structure
       if (response.data && response.data.length > 0) {
         const firstItem = response.data[0];
         console.log('📊 Fields in first item:', Object.keys(firstItem));
         console.log('📊 First item full object:', firstItem);
       }
       
-      setRecentIngresos(response.data || []);
+      // Transform Income[] to IncomeItem[]
+      const incomeItems: IncomeItem[] = response.data.map(income => ({
+        id: income.id,
+        income_id: income.id,
+        name: income.name || 'Sin nombre',
+        description: income.description,
+        amount: income.amount,
+        total_amount: income.total_amount,
+        date: income.date || new Date().toISOString().split('T')[0],
+        status: income.state,
+        status_name: income.status_name || income.state || 'Sin estado',
+        status_color: income.status_color || '#gray',
+        income_type_name: income.income_type_name || 'Sin tipo',
+        category_name: income.category_name,
+        cost_center_name: income.cost_center_name,
+        client_name: income.client_name
+      }));
+      
+      setRecentIngresos(incomeItems);
     } catch (error) {
       console.error('❌ Error fetching recent ingresos:', error);
       setRecentIngresos([]);
@@ -504,28 +521,32 @@ const CashFlowSummary: React.FC<CashFlowSummaryProps> = ({ summary, items }) => 
                   </div>
                   
                   <div className="flex items-center p-2.5 xl:p-5">
-                    <p className="text-gray-800 dark:text-white/90">{ingreso.ep_detail}</p>
+                    <p className="text-gray-800 dark:text-white/90">
+                      {ingreso.description || ingreso.name}
+                    </p>
                   </div>
                   
                   <div className="hidden items-center p-2.5 sm:flex xl:p-5">
-                    <p className="text-gray-800 dark:text-white/90">{ingreso.category_name || 'Sin categoría'}</p>
+                    <p className="text-gray-800 dark:text-white/90">
+                      {ingreso.category_name || 'Sin categoría'}
+                    </p>
                   </div>
                   
                   <div className="hidden items-center p-2.5 sm:flex xl:p-5">
                     <span className={`rounded-full px-2 py-1 text-xs font-medium ${
-                      ingreso.payment_status === 'pagado' 
+                      (ingreso.status || ingreso.status_name)?.toLowerCase() === 'pagado' 
                         ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100'
-                        : ingreso.payment_status === 'pendiente'
+                        : (ingreso.status || ingreso.status_name)?.toLowerCase() === 'pendiente'
                         ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100'
                         : 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100'
                     }`}>
-                      {ingreso.payment_status}
+                      {ingreso.status_name || ingreso.status || 'Sin estado'}
                     </span>
                   </div>
                   
                   <div className="flex items-center p-2.5 xl:p-5">
                     <p className="text-green-500 font-medium">
-                      + {formatCurrency(ingreso.total_amount)}
+                      + {formatCurrency(ingreso.total_amount || ingreso.amount || 0)}
                     </p>
                   </div>
                 </div>

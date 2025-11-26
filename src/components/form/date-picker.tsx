@@ -14,7 +14,7 @@ type PropsType = {
   mode?: "single" | "multiple" | "range" | "time";
   onChange?: Hook | Hook[];
   defaultDate?: DateOption;
-  label?: string;
+  label?: React.ReactNode;
   placeholder?: string;
   disabled?: boolean; // ✅ NUEVA: Prop disabled
   options?: Partial<flatpickr.Options.Options>;

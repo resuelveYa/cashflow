@@ -23,7 +23,9 @@ const IncomeDetail = () => {
   const [deleting, setDeleting] = useState(false);
 
   // Helper function for status badges
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status?: string) => {
+    if (!status) return null;
+    
     const statusConfig = {
       borrador: { label: 'Borrador', className: 'bg-gray-100 text-gray-800' },
       activo: { label: 'Activo', className: 'bg-blue-100 text-blue-800' },
@@ -68,7 +70,6 @@ const IncomeDetail = () => {
           ...incomeData,
           center_name: incomeData.center_name || 'Sin asignar',
           project_name: incomeData.project_name || 'Sin proyecto',
-          // Ensure other potentially missing fields have defaults
           cost_center_code: incomeData.cost_center_code || '',
           description: incomeData.description || '',
           notes: incomeData.notes || ''
@@ -169,7 +170,7 @@ const IncomeDetail = () => {
       <div className="flex justify-between items-start mb-6">
         <div>
           <PageBreadcrumb 
-            pageTitle={`Ingreso ${income.document_number}`} 
+            pageTitle={`Ingreso ${income.document_number || 'Sin número'}`} 
             titleSize="2xl" 
           />
           <div className="flex items-center gap-4 mt-2">
@@ -205,7 +206,7 @@ const IncomeDetail = () => {
                 Número de Documento
               </label>
               <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                {income.document_number}
+                {income.document_number || 'Sin número'}
               </p>
             </div>
             
@@ -222,7 +223,7 @@ const IncomeDetail = () => {
               <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
                 Fecha
               </label>
-              <p className="text-gray-900 dark:text-white">{formatDate(income.date)}</p>
+              <p className="text-gray-900 dark:text-white">{income.date ? formatDate(income.date) : 'Sin fecha'}</p>
             </div>
             
             <div>
@@ -242,7 +243,7 @@ const IncomeDetail = () => {
                 Nombre del Cliente
               </label>
               <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                {income.client_name}
+                {income.client_name || 'Sin cliente'}
               </p>
             </div>
             
@@ -250,7 +251,7 @@ const IncomeDetail = () => {
               <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
                 RUT
               </label>
-              <p className="text-gray-900 dark:text-white">{income.client_tax_id}</p>
+              <p className="text-gray-900 dark:text-white">{income.client_tax_id || 'Sin RUT'}</p>
             </div>
           </div>
         </ComponentCard>
@@ -312,7 +313,7 @@ const IncomeDetail = () => {
                 Valor EP
               </label>
               <p className="text-lg font-semibold text-green-600 dark:text-green-400">
-                {formatCurrency(income.ep_value)}
+                {formatCurrency(income.ep_value || 0)}
               </p>
             </div>
             
@@ -320,8 +321,8 @@ const IncomeDetail = () => {
               <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
                 Reajustes
               </label>
-              <p className={`text-lg font-semibold ${income.adjustments >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {formatCurrency(income.adjustments)}
+              <p className={`text-lg font-semibold ${(income.adjustments || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {formatCurrency(income.adjustments || 0)}
               </p>
             </div>
             
@@ -330,7 +331,7 @@ const IncomeDetail = () => {
                 Total EP
               </label>
               <p className="text-xl font-bold text-green-600 dark:text-green-400">
-                {formatCurrency(income.ep_total)}
+                {formatCurrency(income.ep_total || 0)}
               </p>
             </div>
           </div>
@@ -345,8 +346,8 @@ const IncomeDetail = () => {
               <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
                 Multas
               </label>
-              <p className={`text-lg font-semibold ${income.fine > 0 ? 'text-red-600' : 'text-gray-500'}`}>
-                {formatCurrency(income.fine)}
+              <p className={`text-lg font-semibold ${(income.fine || 0) > 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                {formatCurrency(income.fine || 0)}
               </p>
             </div>
             
@@ -354,8 +355,8 @@ const IncomeDetail = () => {
               <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
                 Retenciones
               </label>
-              <p className={`text-lg font-semibold ${income.retention !== 0 ? 'text-red-600' : 'text-gray-500'}`}>
-                {formatCurrency(income.retention)}
+              <p className={`text-lg font-semibold ${(income.retention || 0) !== 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                {formatCurrency(income.retention || 0)}
               </p>
             </div>
             
@@ -363,8 +364,8 @@ const IncomeDetail = () => {
               <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
                 Anticipos
               </label>
-              <p className={`text-lg font-semibold ${income.advance > 0 ? 'text-red-600' : 'text-gray-500'}`}>
-                {formatCurrency(income.advance)}
+              <p className={`text-lg font-semibold ${(income.advance || 0) > 0 ? 'text-red-600' : 'text-gray-500'}`}>
+                {formatCurrency(income.advance || 0)}
               </p>
             </div>
           </div>
@@ -380,7 +381,7 @@ const IncomeDetail = () => {
                 Exento
               </label>
               <p className="text-lg font-semibold text-gray-600">
-                {formatCurrency(income.exempt)}
+                {formatCurrency(income.exempt || 0)}
               </p>
             </div>
             
@@ -389,7 +390,7 @@ const IncomeDetail = () => {
                 Neto
               </label>
               <p className="text-lg font-semibold text-blue-600 dark:text-blue-400">
-                {formatCurrency(income.net_amount)}
+                {formatCurrency(income.net_amount || 0)}
               </p>
             </div>
             
@@ -398,7 +399,7 @@ const IncomeDetail = () => {
                 IVA
               </label>
               <p className="text-lg font-semibold text-orange-600 dark:text-orange-400">
-                {formatCurrency(income.tax_amount)}
+                {formatCurrency(income.tax_amount || 0)}
               </p>
             </div>
           </div>
@@ -414,7 +415,7 @@ const IncomeDetail = () => {
                 Total Final
               </label>
               <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                {formatCurrency(income.total_amount)}
+                {formatCurrency(income.total_amount || 0)}
               </p>
             </div>
             
@@ -506,7 +507,7 @@ const IncomeDetail = () => {
             Eliminar Ingreso
           </h3>
           <p className="text-gray-600 dark:text-gray-300 mb-4">
-            ¿Está seguro que desea eliminar el ingreso <strong>{income.document_number}</strong>?
+            ¿Está seguro que desea eliminar el ingreso <strong>{income.document_number || 'este ingreso'}</strong>?
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
             Esta acción no se puede deshacer.

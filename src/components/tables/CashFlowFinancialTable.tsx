@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { formatCurrency } from '../../utils/formatters';
-// import ingresosApiService from '../../services/ingresosService'; // ELIMINADO
+import { incomeApiService } from '../../services/incomeService';
 import { FinancialAggregationService } from '../../services/financialAggregationService';
 import { accountCategoriesService } from '../../services/accountCategoriesService';
 import {
@@ -250,14 +250,14 @@ const CashFlowFinancialTable: React.FC<CashFlowFinancialTableProps> = ({
             const range = getPeriodDateRange(period, periodType, year);
             if (range) {
               try {
-                const response = await ingresosApiService.getIngresos({
+                const response = await incomeApiService.getIncomes({
                   categoryId: category.categoryId,
                   startDate: range.startDate,
                   endDate: range.endDate,
                   limit: 1000
                 });
 
-                const totalAmount = response.data?.reduce((sum, ingreso) => sum + ingreso.total_amount, 0) || 0;
+                const totalAmount = response.data?.reduce((sum: number, ingreso: any) => sum + (ingreso.total_amount || 0), 0) || 0;
                 periodAmounts[period.id] = totalAmount;
               } catch (error) {
                 console.warn(`Error fetching data for ${category.title} - ${period.label}:`, error);

@@ -169,7 +169,7 @@ const IncomeIndex = () => {
 
         // **2. GENERAR PERÍODOS**
         let periodData: FinancialPeriod[] = [];
-        const selectedYear = parseInt(filters.year);
+        const selectedYear = parseInt(filters.year || new Date().getFullYear().toString());
         
         if (filters.periodType === 'weekly') {
           periodData = generateWeekPeriods(selectedYear);
@@ -223,12 +223,12 @@ const IncomeIndex = () => {
   // **FUNCIÓN PARA TRANSFORMAR DATOS**
   const transformIncomeItemsToFinancialRecords = (incomeItems: IncomeItem[]): FinancialRecordItem[] => {
     return incomeItems.map(item => ({
-      id: item.income_id,
-      name: item.description || 'Sin descripción',
+      id: item.income_id || item.id,
+      name: item.description || item.name || 'Sin descripción',
       category: item.client_name || 'Sin cliente',
       date: item.date,
-      state: mapStatusToState(item.status),
-      amount: item.amount
+      state: mapStatusToState(item.status || item.status_name || ''),
+      amount: item.amount || item.total_amount || 0
     }));
   };
 
@@ -335,7 +335,7 @@ const IncomeIndex = () => {
         <ComponentCard title="Total de Ingresos" className="bg-white dark:bg-gray-800 h-48">
           <div className="flex flex-col items-center justify-center h-full">
             <p className="text-3xl font-bold text-green-500">
-              {incomeData ? formatCurrency(incomeData.totalIncomes) : formatCurrency(0)}
+              {incomeData ? formatCurrency(incomeData.totalIncomes || 0) : formatCurrency(0)}
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400">Monto total registrado</p>
           </div>
@@ -344,7 +344,7 @@ const IncomeIndex = () => {
         <ComponentCard title="Ingresos Pendientes" className="bg-white dark:bg-gray-800 h-48">
           <div className="flex flex-col items-center justify-center h-full">
             <p className="text-3xl font-bold text-yellow-500">
-              {incomeData ? incomeData.pendingIncomes : 0}
+              {incomeData ? incomeData.pendingIncomes || 0 : 0}
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400">Registros por procesar</p>
           </div>
@@ -388,27 +388,31 @@ const IncomeIndex = () => {
       
       {/* Clientes con datos */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mb-6">
-        {incomeData?.byClientData.filter(client => client.has_data).map((client, index) => (
-          <Link to={client.path} key={client.client_id || index}>
-            <div className="bg-white p-5 rounded-lg shadow hover:shadow-md transition-all dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-600">
-              <div className="flex items-start justify-between mb-2">
-                <h3 className="font-medium text-gray-800 dark:text-white text-sm line-clamp-2">{client.client_name}</h3>
-                <div className="flex items-center ml-2">
-                  <svg className="w-4 h-4 text-gray-400 hover:text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
+        {incomeData?.byClientData?.filter(client => client.has_data).map((client, index) => {
+          const clientPath = client.path || `/clients/${client.client_id}`;
+          const clientAmount = client.amount ?? client.total_amount ?? 0;
+          return (
+            <Link to={clientPath} key={client.client_id || index}>
+              <div className="bg-white p-5 rounded-lg shadow hover:shadow-md transition-all dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-600">
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="font-medium text-gray-800 dark:text-white text-sm line-clamp-2">{client.client_name}</h3>
+                  <div className="flex items-center ml-2">
+                    <svg className="w-4 h-4 text-gray-400 hover:text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
                 </div>
+                
+                {client.client_tax_id && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">RUT: {client.client_tax_id}</p>
+                )}
+                
+                <p className="text-2xl font-bold text-green-500 mb-1">{formatCurrency(clientAmount)}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{client.count || 0} registros</p>
               </div>
-              
-              {client.client_tax_id && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">RUT: {client.client_tax_id}</p>
-              )}
-              
-              <p className="text-2xl font-bold text-green-500 mb-1">{formatCurrency(client.amount)}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{client.count} registros</p>
-            </div>
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
       </div>
 
       {/* **CENTROS DE COSTO CON INGRESOS** */}
@@ -416,27 +420,33 @@ const IncomeIndex = () => {
       
       {/* Centros con datos */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mb-6">
-        {incomeData?.byCenterData.filter(center => center.has_data).map((center, index) => (
-          <Link to={center.path} key={center.center_id || index}>
-            <div className="bg-white p-5 rounded-lg shadow hover:shadow-md transition-all dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600">
-              <div className="flex items-start justify-between mb-2">
-                <h3 className="font-medium text-gray-800 dark:text-white text-sm line-clamp-2">{center.center_name}</h3>
-                <div className="flex items-center ml-2">
-                  <svg className="w-4 h-4 text-gray-400 hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
+        {incomeData?.byCenterData?.filter(center => center.has_data).map((center, index) => {
+          const centerId = center.cost_center_id || center.center_id || 0;
+          const centerPath = center.path || `/cost-centers/${centerId}`;
+          const centerAmount = center.amount ?? center.total_amount ?? 0;
+          const centerName = center.cost_center_name || center.center_name || 'Sin nombre';
+          return (
+            <Link to={centerPath} key={centerId || index}>
+              <div className="bg-white p-5 rounded-lg shadow hover:shadow-md transition-all dark:bg-gray-800 border border-gray-100 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600">
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="font-medium text-gray-800 dark:text-white text-sm line-clamp-2">{centerName}</h3>
+                  <div className="flex items-center ml-2">
+                    <svg className="w-4 h-4 text-gray-400 hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
                 </div>
+                
+                {center.center_code && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Código: {center.center_code}</p>
+                )}
+                
+                <p className="text-2xl font-bold text-blue-500 mb-1">{formatCurrency(centerAmount)}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{center.count || 0} registros</p>
               </div>
-              
-              {center.center_code && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Código: {center.center_code}</p>
-              )}
-              
-              <p className="text-2xl font-bold text-blue-500 mb-1">{formatCurrency(center.amount)}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{center.count} registros</p>
-            </div>
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
       </div>
 
       {/* Clientes sin datos */}
@@ -467,27 +477,30 @@ const IncomeIndex = () => {
             {incomeData.byClientData
               .filter(client => !client.has_data)
               .slice(0, showEmptyClients ? undefined : 3)
-              .map((client, index) => (
-                <Link to={client.path} key={client.client_id || index}>
-                  <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 hover:border-gray-300 transition-all dark:bg-gray-700 dark:border-gray-600 opacity-75 hover:opacity-100">
-                    <div className="flex items-start justify-between mb-1">
-                      <h4 className="font-medium text-gray-600 dark:text-gray-300 text-sm line-clamp-2">{client.client_name}</h4>
-                      <div className="flex items-center ml-1">
-                        <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
+              .map((client, index) => {
+                const clientPath = client.path || `/clients/${client.client_id}`;
+                return (
+                  <Link to={clientPath} key={client.client_id || index}>
+                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 hover:border-gray-300 transition-all dark:bg-gray-700 dark:border-gray-600 opacity-75 hover:opacity-100">
+                      <div className="flex items-start justify-between mb-1">
+                        <h4 className="font-medium text-gray-600 dark:text-gray-300 text-sm line-clamp-2">{client.client_name}</h4>
+                        <div className="flex items-center ml-1">
+                          <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
                       </div>
+                      
+                      {client.client_tax_id && (
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mb-1">RUT: {client.client_tax_id}</p>
+                      )}
+                      
+                      <p className="text-lg font-bold text-gray-400 dark:text-gray-500">{formatCurrency(0)}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500">Sin registros</p>
                     </div>
-                    
-                    {client.client_tax_id && (
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mb-1">RUT: {client.client_tax_id}</p>
-                    )}
-                    
-                    <p className="text-lg font-bold text-gray-400 dark:text-gray-500">{formatCurrency(0)}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">Sin registros</p>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
           </div>
           
           {!showEmptyClients && incomeData.byClientData.filter(client => !client.has_data).length > 3 && (
@@ -506,7 +519,7 @@ const IncomeIndex = () => {
       {/* **TABLA DE INGRESOS RECIENTES** */}
       <h2 className="text-xl font-bold text-gray-800 dark:text-white my-6">Ingresos Recientes</h2>
       <RecentFinancialTable 
-        data={incomeData ? transformIncomeItemsToFinancialRecords(incomeData.recentIncomes) : []}
+        data={incomeData ? transformIncomeItemsToFinancialRecords(incomeData.recentIncomes || []) : []}
         loading={loading}
         type="income"
       />

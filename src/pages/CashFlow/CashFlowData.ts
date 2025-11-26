@@ -17,7 +17,7 @@
 
 // src/pages/CashFlow/CashFlowData.ts
 import cashFlowService from '../../services/cashFlowService';
-// import ingresosApiService from '../../services/ingresosService'; // ELIMINADO
+import { incomeApiService } from '../../services/incomeService';
 import { 
   DateRange, 
   CashFlowData, 
@@ -25,7 +25,7 @@ import {
   CashFlowSummaryData,
   CashFlowChartData
 } from '../../types/cashFlow';
-import { Ingreso, IngresoFilter } from '../../types/CC/ingreso';
+import { IncomeItem, IncomeFilters } from '../../types/income';
 
 // Default date range - current month
 export const getDefaultDateRange = (): DateRange => {
@@ -39,33 +39,28 @@ export const getDefaultDateRange = (): DateRange => {
   };
 };
 
-// Function to convert Ingreso to CashFlowItem
-const transformIngresoToCashFlowItem = (ingreso: Ingreso): CashFlowItem => {
+// Function to convert IncomeItem to CashFlowItem
+const transformIngresoToCashFlowItem = (ingreso: IncomeItem): CashFlowItem => {
   // Create a more descriptive description
   let description = '';
   
-  if (ingreso.ep_detail && ingreso.ep_detail.trim()) {
-    description = ingreso.ep_detail;
-  } else if (ingreso.client_name && ingreso.client_name.trim()) {
-    description = `Ingreso de ${ingreso.client_name}`;
+  if (ingreso.description && ingreso.description.trim()) {
+    description = ingreso.description;
+  } else if (ingreso.name && ingreso.name.trim()) {
+    description = ingreso.name;
   } else {
-    description = `Documento ${ingreso.document_number}`;
-  }
-  
-  // Add document number if not already included
-  if (!description.includes(ingreso.document_number)) {
-    description += ` (${ingreso.document_number})`;
+    description = 'Ingreso sin descripción';
   }
 
   return {
     id: ingreso.id,
-    date: ingreso.date,
+    date: ingreso.date || new Date().toISOString().split('T')[0],
     description: description,
     category: ingreso.category_name || 'Sin categoría',
-    amount: ingreso.total_amount,
+    amount: ingreso.amount || ingreso.total_amount || 0,
     type: 'income' as const,
     state: 'actual',
-    cost_center_name: ingreso.center_name || undefined,
+    cost_center_name: ingreso.cost_center_name || undefined,
     source_type: 'ingresos'
   };
 };
@@ -73,7 +68,7 @@ const transformIngresoToCashFlowItem = (ingreso: Ingreso): CashFlowItem => {
 // Function to fetch ingresos and transform them
 const fetchIngresosAsCashFlowItems = async (dateRange: DateRange): Promise<CashFlowItem[]> => {
   try {
-    const filter: IngresoFilter = {
+    const filter: IncomeFilters = {
       startDate: dateRange.startDate,
       endDate: dateRange.endDate,
       // Only include active, invoiced and paid ingresos for cash flow
@@ -83,15 +78,16 @@ const fetchIngresosAsCashFlowItems = async (dateRange: DateRange): Promise<CashF
       sortDirection: 'desc'
     };
 
-    const response = await ingresosApiService.getIngresos(filter);
-    const ingresos = response.data || [];
+    const response = await incomeApiService.getIncomeData(filter);
+    const ingresos = response.recentIncomes || [];
     
-    // Filter by relevant states for cash flow (exclude 'borrador' and 'cancelado')
-    const relevantIngresos = ingresos.filter(ingreso => 
-      ingreso.state === 'activo' || 
-      ingreso.state === 'facturado' || 
-      ingreso.state === 'pagado'
-    );
+    // Filter by relevant states for cash flow
+    const relevantIngresos = ingresos.filter((ingreso: IncomeItem) => {
+      const status = (ingreso.status || ingreso.status_name || '').toLowerCase();
+      return status === 'activo' || 
+             status === 'facturado' || 
+             status === 'pagado';
+    });
     
     return relevantIngresos.map(transformIngresoToCashFlowItem);
   } catch (error) {
@@ -260,10 +256,6 @@ const getMockCashFlowData = (): CashFlowData => {
     { id: 18, date: '2023-05-28', description: 'Gastos Trámites', category: 'Permisos', amount: 10000, type: 'expense' as const },
     { id: 19, date: '2023-05-30', description: 'Pago de Seguros', category: 'Seguros', amount: 15000, type: 'expense' as const },
     { id: 20, date: '2023-05-15', description: 'Renta de Maquinaria', category: 'Equipamiento', amount: 8000, type: 'expense' as const },
-    { id: 6, date: '2023-05-20', description: 'Pago de Cliente - Project C', category: 'Ventas', amount: 30000, type: 'income' as const },
-    { id: 7, date: '2023-05-25', description: 'Utilidades', category: 'Oficina', amount: 5000, type: 'expense' as const },
-    { id: 8, date: '2023-05-28', description: 'Gastos Trámites', category: 'Permisos', amount: 10000, type: 'expense' as const },
-    { id: 9, date: '2023-05-30', description: 'Pago de Seguros', category: 'Seguros', amount: 15000, type: 'expense' as const },
   ];
   
   const totalIncome = items.filter(i => i.type === 'income').reduce((sum, i) => sum + i.amount, 0);

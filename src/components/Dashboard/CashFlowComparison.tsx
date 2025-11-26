@@ -11,6 +11,7 @@ interface CashFlowComparisonProps {
 
 interface CombinedPeriodData {
   period: string;
+  period_label: string;
   income: number;
   expense: number;
   netFlow: number;
@@ -29,6 +30,7 @@ const CashFlowComparison: React.FC<CashFlowComparisonProps> = ({
     incomeData.forEach(item => {
       const existing = periodMap.get(item.period_label) || {
         period: item.period_label,
+        period_label: item.period_label,
         income: 0,
         expense: 0,
         netFlow: 0,
@@ -41,6 +43,7 @@ const CashFlowComparison: React.FC<CashFlowComparisonProps> = ({
     expenseData.forEach(item => {
       const existing = periodMap.get(item.period_label) || {
         period: item.period_label,
+        period_label: item.period_label,
         income: 0,
         expense: 0,
         netFlow: 0,
@@ -263,7 +266,7 @@ const CashFlowComparison: React.FC<CashFlowComparisonProps> = ({
               {tableData.map((row) => (
                 <tr key={row.period} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                    {row.period}
+                    {row.period_label}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-green-600 dark:text-green-400">
                     {formatCurrency(row.income)}

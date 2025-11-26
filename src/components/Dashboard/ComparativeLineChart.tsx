@@ -168,7 +168,6 @@ const ComparativeLineChart: React.FC<ComparativeLineChartProps> = ({
       },
       animations: {
         enabled: true,
-        easing: 'easeinout',
         speed: 800
       },
       zoom: {
