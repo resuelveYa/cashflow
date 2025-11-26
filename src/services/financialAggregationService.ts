@@ -33,6 +33,12 @@ export interface FinancialAggregationOptions {
   costCenterId?: number; // Optional cost center filter
 }
 
+interface ItemFilters {
+  date_from?: string;
+  date_to?: string;
+  [key: string]: any;
+}
+
 /**
  * Service to handle financial data aggregation from multiple sources
  */

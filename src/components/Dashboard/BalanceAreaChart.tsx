@@ -63,7 +63,6 @@ export default function BalanceAreaChart({ incomeData, expenseData, loading }: B
         background: 'transparent',
         animations: {
           enabled: true,
-          easing: 'easeinout',
           speed: 800
         }
       },

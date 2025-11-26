@@ -13,16 +13,16 @@ export interface IncomeCategory {
   updated_at?: string;
 }
 
-const BASE_URL = ''; // apiService already adds /api prefix
+const BASE_URL = '';
 
 export const incomeCategoryService = {
   async getByType(typeId: number): Promise<IncomeCategory[]> {
-    const response = await apiService.get(`${BASE_URL}/income-types/${typeId}/categories`);
+    const response = await apiService.get<{ data: IncomeCategory[] }>(`${BASE_URL}/income-types/${typeId}/categories`);
     return response.data;
   },
 
   async create(typeId: number, data: Partial<IncomeCategory>): Promise<{ id: number }> {
-    const response = await apiService.post(`${BASE_URL}/income-types/${typeId}/categories`, data);
+    const response = await apiService.post<{ data: { id: number } }>(`${BASE_URL}/income-types/${typeId}/categories`, data);
     return response.data;
   },
 

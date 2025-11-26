@@ -200,9 +200,17 @@ export default function IncomeDataForm() {
 
           {/* Date */}
           <div>
+            <label 
+              htmlFor="form-date" 
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
+              Fecha
+              {incomeType?.required_date && (
+                <span className="text-red-500 ml-1">*</span>
+              )}
+            </label>
             <DatePicker
               id="form-date"
-              label={<>Fecha {incomeType?.required_date && <span className="text-red-500">*</span>}</>}
               defaultDate={formData.date || new Date().toISOString().split('T')[0]}
               onChange={(selectedDates) => {
                 if (selectedDates.length > 0) {
@@ -282,9 +290,17 @@ export default function IncomeDataForm() {
           {/* Payment Date */}
           {incomeType?.show_payment_date && (
             <div>
+              <label 
+                htmlFor="form-payment-date" 
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
+                Fecha de Pago
+                {incomeType?.required_payment_date && (
+                  <span className="text-red-500 ml-1">*</span>
+                )}
+              </label>
               <DatePicker
                 id="form-payment-date"
-                label={<>Fecha de Pago {incomeType?.required_payment_date && <span className="text-red-500">*</span>}</>}
                 defaultDate={formData.payment_date || ''}
                 onChange={(selectedDates) => {
                   if (selectedDates.length > 0) {

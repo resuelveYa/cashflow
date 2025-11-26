@@ -50,9 +50,6 @@ export interface TopTransaction {
 }
 
 class ConsolidatedDashboardService {
-  /**
-   * Fetch all consolidated data in parallel
-   */
   async fetchAllData(filters: { date_from?: string; date_to?: string; cost_center_id?: number } = {}): Promise<ConsolidatedData> {
     try {
       const [
@@ -75,13 +72,6 @@ class ConsolidatedDashboardService {
         this.getExpenseCashFlow(filters)
       ]);
 
-      console.log('Fetched Data:', {
-        incomeSummary,
-        expenseSummary,
-        incomeByType,
-        expenseByType
-      });
-
       return {
         income: {
           summary: incomeSummary,
@@ -102,17 +92,12 @@ class ConsolidatedDashboardService {
     }
   }
 
-  /**
-   * Calculate financial KPIs from consolidated data
-   */
   calculateKPIs(data: ConsolidatedData): FinancialKPIs {
     const totalIncome = data.income.summary.total_amount || 0;
     const totalExpense = data.expense.summary.total_amount || 0;
     const netCashFlow = totalIncome - totalExpense;
     const profitMargin = totalIncome > 0 ? (netCashFlow / totalIncome) * 100 : 0;
 
-    // Calculate growth percentages (comparing with previous period)
-    // This is a placeholder - you might want to implement proper period comparison
     const incomeGrowth = data.income.summary.trend_percentage || 0;
     const expenseGrowth = data.expense.summary.trend_percentage || 0;
     const cashFlowGrowth = incomeGrowth - expenseGrowth;
@@ -130,50 +115,28 @@ class ConsolidatedDashboardService {
     };
   }
 
-  /**
-   * Get operational metrics
-   */
   async getOperationalMetrics(filters: { cost_center_id?: number } = {}): Promise<OperationalMetrics> {
     try {
-      // Fetch active types, categories, and cost centers
+      // api.get() retorna SOLO response.data → o sea: { data: [...] }
       const [incomeTypes, expenseTypes, costCenters] = await Promise.all([
-        api.get('/income-types', { params: { only_active: true } }),
-        api.get('/expense-types', { params: { only_active: true } }),
-        api.get('/cost-centers')
+        api.get<{ data: any[] }>('/income-types', { params: { only_active: true } }),
+        api.get<{ data: any[] }>('/expense-types', { params: { only_active: true } }),
+        api.get<{ data: any[] }>('/cost-centers')
       ]);
 
-      console.log('[consolidatedDashboardService] API responses:', {
-        incomeTypes: incomeTypes.data,
-        expenseTypes: expenseTypes.data,
-        costCenters: costCenters.data
-      });
+      const incomeTypesArr = Array.isArray(incomeTypes.data) ? incomeTypes.data : [];
+      const expenseTypesArr = Array.isArray(expenseTypes.data) ? expenseTypes.data : [];
+      const costCentersArr = Array.isArray(costCenters.data) ? costCenters.data : [];
 
-      // If filtering by cost center, count only active (1), otherwise count all active
       const costCentersCount = filters.cost_center_id
         ? 1
-        : (Array.isArray(costCenters.data)
-            ? costCenters.data.filter((cc: any) => cc.is_active !== false).length
-            : (costCenters.data?.data?.filter((cc: any) => cc.is_active !== false)?.length || 0));
-
-      const incomeTypesCount = Array.isArray(incomeTypes.data)
-        ? incomeTypes.data.length
-        : (incomeTypes.data?.length || 0);
-
-      const expenseTypesCount = Array.isArray(expenseTypes.data)
-        ? expenseTypes.data.length
-        : (expenseTypes.data?.length || 0);
-
-      console.log('[consolidatedDashboardService] Calculated counts:', {
-        costCentersCount,
-        incomeTypesCount,
-        expenseTypesCount
-      });
+        : costCentersArr.filter((cc: any) => cc.is_active !== false).length;
 
       return {
         costCentersCount,
-        incomeTypesCount,
-        expenseTypesCount,
-        totalTransactions: 0 // Will be calculated from summary
+        incomeTypesCount: incomeTypesArr.length,
+        expenseTypesCount: expenseTypesArr.length,
+        totalTransactions: 0
       };
     } catch (error) {
       console.error('Error fetching operational metrics:', error);
@@ -186,78 +149,73 @@ class ConsolidatedDashboardService {
     }
   }
 
-  /**
-   * Get top N transactions (calculated from full data if endpoint doesn't exist)
-   */
-  async getTopTransactions(limit: number = 5, filters: { date_from?: string; date_to?: string } = {}): Promise<{
-    income: TopTransaction[];
-    expense: TopTransaction[];
-  }> {
+  async getTopTransactions(
+    limit: number = 5,
+    filters: { date_from?: string; date_to?: string } = {}
+  ): Promise<{ income: TopTransaction[]; expense: TopTransaction[] }> {
     try {
-      // Try to use dedicated endpoint first
       const [incomeTop, expenseTop] = await Promise.all([
-        api.get(`/incomes/dashboard/top-transactions`, {
+        api.get<{ data: TopTransaction[] }>('/incomes/dashboard/top-transactions', {
           params: { ...filters, limit }
-        }).catch(() => null),
-        api.get(`/expenses/dashboard/top-transactions`, {
+        }).catch(() => ({ data: [] })),
+
+        api.get<{ data: TopTransaction[] }>('/expenses/dashboard/top-transactions', {
           params: { ...filters, limit }
-        }).catch(() => null)
+        }).catch(() => ({ data: [] }))
       ]);
 
       return {
-        income: incomeTop?.data || [],
-        expense: expenseTop?.data || []
+        income: incomeTop.data ?? [],
+        expense: expenseTop.data ?? []
       };
     } catch (error) {
       console.error('Error fetching top transactions:', error);
-      return {
-        income: [],
-        expense: []
-      };
+      return { income: [], expense: [] };
     }
   }
 
-  // Private helper methods for individual endpoints
+  // -----------------------------------------------------
+  //  ENDPOINTS PRINCIPALES → api.get() devuelve SOLO .data
+  // -----------------------------------------------------
+
   private async getIncomeSummary(filters: any) {
-    const response = await api.get('/incomes/dashboard/summary', { params: filters });
-    console.log('Income Summary Response:', response.data);
-    return response.data;
+    const res = await api.get<{ data: DashboardSummary }>('/incomes/dashboard/summary', { params: filters });
+    return res.data;
   }
 
   private async getIncomeByType(filters: any) {
-    const response = await api.get('/incomes/dashboard/by-type', { params: filters });
-    return response.data;
+    const res = await api.get<{ data: TypeSummary[] }>('/incomes/dashboard/by-type', { params: filters });
+    return res.data;
   }
 
   private async getIncomeByCategory(filters: any) {
-    const response = await api.get('/incomes/dashboard/by-category', { params: filters });
-    return response.data;
+    const res = await api.get<{ data: CategorySummary[] }>('/incomes/dashboard/by-category', { params: filters });
+    return res.data;
   }
 
   private async getIncomeCashFlow(filters: any) {
-    const response = await api.get('/incomes/dashboard/cash-flow', { params: filters });
-    return response.data;
+    const res = await api.get<{ data: CashFlowPeriod[] }>('/incomes/dashboard/cash-flow', { params: filters });
+    return res.data;
   }
 
   private async getExpenseSummary(filters: any) {
-    const response = await api.get('/expenses/dashboard/summary', { params: filters });
-    console.log('Expense Summary Response:', response.data);
-    return response.data;
+    const res = await api.get<{ data: DashboardSummary }>('/expenses/dashboard/summary', { params: filters });
+    return res.data;
   }
 
   private async getExpenseByType(filters: any) {
-    const response = await api.get('/expenses/dashboard/by-type', { params: filters });
-    return response.data;
+    const res = await api.get<{ data: TypeSummary[] }>('/expenses/dashboard/by-type', { params: filters });
+    return res.data;
   }
 
   private async getExpenseByCategory(filters: any) {
-    const response = await api.get('/expenses/dashboard/by-category', { params: filters });
-    return response.data;
+    const res = await api.get<{ data: CategorySummary[] }>('/expenses/dashboard/by-category', { params: filters });
+    return res.data;
   }
 
   private async getExpenseCashFlow(filters: any) {
-    const response = await api.get('/expenses/dashboard/cash-flow', { params: filters });
-    return response.data;
+    const res = await api.get<{ data: CashFlowPeriod[] }>('/expenses/dashboard/cash-flow', { params: filters });
+    return res.data;
   }
 }
 

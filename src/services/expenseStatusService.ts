@@ -14,16 +14,16 @@ export interface ExpenseStatus {
   updated_at?: string;
 }
 
-const BASE_URL = ''; // apiService already adds /api prefix
+const BASE_URL = '';
 
 export const expenseStatusService = {
   async getByType(typeId: number): Promise<ExpenseStatus[]> {
-    const response = await apiService.get(`${BASE_URL}/expense-types/${typeId}/statuses`);
+    const response = await apiService.get<{ data: ExpenseStatus[] }>(`${BASE_URL}/expense-types/${typeId}/statuses`);
     return response.data;
   },
 
   async create(typeId: number, data: Partial<ExpenseStatus>): Promise<{ id: number }> {
-    const response = await apiService.post(`${BASE_URL}/expense-types/${typeId}/statuses`, data);
+    const response = await apiService.post<{ data: { id: number } }>(`${BASE_URL}/expense-types/${typeId}/statuses`, data);
     return response.data;
   },
 

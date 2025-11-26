@@ -1,12 +1,20 @@
 // src/services/incomeDataService.ts
 import apiService from './apiService';
-import type { IncomeData, IncomeFilters, PaginationInfo } from '../types/income';
+import type { IncomeData, IncomeFilters } from '../types/income';
+
+// Definir PaginationInfo aquí ya que no existe en types/income
+export interface PaginationInfo {
+  total: number;
+  page: number;
+  perPage: number;
+  totalPages: number;
+}
 
 const BASE_URL = ''; // apiService already adds /api prefix
 
 export const incomeDataService = {
   async getAll(filters?: IncomeFilters): Promise<{ data: IncomeData[]; pagination: PaginationInfo }> {
-    const response = await apiService.get(`${BASE_URL}/incomes`, { params: filters });
+    const response = await apiService.get<{ data: IncomeData[]; pagination: PaginationInfo }>(`${BASE_URL}/incomes`, { params: filters });
     return {
       data: response.data,
       pagination: response.pagination
@@ -14,12 +22,12 @@ export const incomeDataService = {
   },
 
   async getById(id: number): Promise<IncomeData> {
-    const response = await apiService.get(`${BASE_URL}/incomes/${id}`);
+    const response = await apiService.get<{ data: IncomeData }>(`${BASE_URL}/incomes/${id}`);
     return response.data;
   },
 
   async create(data: Partial<IncomeData>): Promise<{ id: number; warnings?: any[] }> {
-    const response = await apiService.post(`${BASE_URL}/incomes`, data);
+    const response = await apiService.post<{ data: { id: number }; warnings?: any[] }>(`${BASE_URL}/incomes`, data);
     return {
       id: response.data.id,
       warnings: response.warnings
@@ -27,7 +35,7 @@ export const incomeDataService = {
   },
 
   async update(id: number, data: Partial<IncomeData>): Promise<{ warnings?: any[] }> {
-    const response = await apiService.put(`${BASE_URL}/incomes/${id}`, data);
+    const response = await apiService.put<{ warnings?: any[] }>(`${BASE_URL}/incomes/${id}`, data);
     return { warnings: response.warnings };
   },
 
@@ -36,19 +44,19 @@ export const incomeDataService = {
   },
 
   async getStats(incomeTypeId?: number, dateFrom?: string, dateTo?: string): Promise<any[]> {
-    const response = await apiService.get(`${BASE_URL}/incomes/stats`, {
+    const response = await apiService.get<{ data: any[] }>(`${BASE_URL}/incomes/stats`, {
       params: { income_type_id: incomeTypeId, date_from: dateFrom, date_to: dateTo }
     });
     return response.data;
   },
 
   async getByStatus(typeId: number): Promise<any[]> {
-    const response = await apiService.get(`${BASE_URL}/income-types/${typeId}/incomes-by-status`);
+    const response = await apiService.get<{ data: any[] }>(`${BASE_URL}/income-types/${typeId}/incomes-by-status`);
     return response.data;
   },
 
   async bulkCreate(incomes: Partial<IncomeData>[]): Promise<any> {
-    const response = await apiService.post(`${BASE_URL}/incomes/bulk`, { incomes });
+    const response = await apiService.post<any>(`${BASE_URL}/incomes/bulk`, { incomes });
     return response;
   }
 };

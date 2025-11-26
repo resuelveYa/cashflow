@@ -1,24 +1,83 @@
 // src/services/incomeService.ts
 import api from './apiService';
 import { 
-  Income, 
-  IncomeDetail, 
-  IncomeFilter, 
-  IncomeStats, 
   IncomeData, 
-  IncomeFilters, 
-  IncomeItem, 
-  IncomesByPeriod, 
-  IncomesByClient, 
-  IncomesByCenter 
+  IncomeFilters
 } from '@/types/income';
+
+// Tipos adicionales que no están en income.ts
+export interface Income {
+  id: number;
+  [key: string]: any;
+}
+
+export interface IncomeDetail extends Income {
+  details?: any;
+}
+
+export interface IncomeFilter {
+  [key: string]: any;
+}
+
+export interface IncomeStats {
+  [key: string]: any;
+}
+
+export interface IncomeItem {
+  [key: string]: any;
+}
+
+export interface IncomesByPeriod {
+  client: string;
+  path: string;
+  amounts: Record<string, number>;
+}
+
+export interface IncomesByClient {
+  client_id: string;
+  client_name: string;
+  client_tax_id: string;
+  amount: number;
+  count: number;
+  path: string;
+  has_data: boolean;
+}
+
+export interface IncomesByCenter {
+  center_id: number;
+  center_name: string;
+  center_code: string;
+  amount: number;
+  count: number;
+  path: string;
+  has_data: boolean;
+}
+
+// Extender IncomeFilters con propiedades adicionales
+export interface ExtendedIncomeFilters extends IncomeFilters {
+  periodType?: string;
+  year?: string;
+  projectId?: string;
+  clientId?: string;
+  status?: string;
+}
+
+// Extender IncomeData con propiedades adicionales
+export interface ExtendedIncomeData extends IncomeData {
+  totalIncomes?: number;
+  pendingIncomes?: number;
+  recentIncomes?: IncomeItem[];
+  byPeriodData?: IncomesByPeriod[];
+  byClientData?: IncomesByClient[];
+  byCenterData?: IncomesByCenter[];
+}
 
 // Servicio de API para Ingresos
 export const incomeApiService = {
   /**
    * Obtener datos consolidados de ingresos
    */
-  async getIncomeData(filters: IncomeFilters): Promise<IncomeData> {
+  async getIncomeData(filters: ExtendedIncomeFilters): Promise<ExtendedIncomeData> {
     try {
       const params = new URLSearchParams();
       
@@ -28,8 +87,8 @@ export const incomeApiService = {
       if (filters.projectId && filters.projectId !== 'all') {
         params.append('cost_center_id', filters.projectId);
       }
-      if (filters.costCenterId && filters.costCenterId !== 'all') {
-        params.append('cost_center_id', filters.costCenterId);
+      if (filters.cost_center_id && filters.cost_center_id.toString() !== 'all') {
+        params.append('cost_center_id', filters.cost_center_id.toString());
       }
       if (filters.clientId && filters.clientId !== 'all') {
         params.append('client_id', filters.clientId);
@@ -95,10 +154,15 @@ export const incomeApiService = {
       const recentIncomes = items.slice(0, 10);
 
       return {
+        id: 0,
+        income_type_id: 0,
+        organization_id: '',
+        created_at: '',
+        updated_at: '',
         totalIncomes: parseFloat(summary.total_incomes.toString()) || 0,
         pendingIncomes: summary.pending_count || 0,
         recentIncomes,
-        byPeriodData: [], // Se calculará después con los períodos
+        byPeriodData: [],
         byClientData,
         byCenterData
       };
@@ -112,7 +176,7 @@ export const incomeApiService = {
   /**
    * Obtener datos por período para la tabla financiera
    */
-  async getIncomesByPeriod(filters: IncomeFilters): Promise<IncomesByPeriod[]> {
+  async getIncomesByPeriod(filters: ExtendedIncomeFilters): Promise<IncomesByPeriod[]> {
     try {
       console.log('🔄 getIncomesByPeriod called with filters:', filters);
       
@@ -121,7 +185,7 @@ export const incomeApiService = {
       // Añadir filtros
       Object.entries(filters).forEach(([key, value]) => {
         if (value && value !== 'all') {
-          const backendKey = key === 'costCenterId' ? 'cost_center_id' : 
+          const backendKey = key === 'cost_center_id' ? 'cost_center_id' : 
                            key === 'clientId' ? 'client_id' : key;
           params.append(backendKey, value.toString());
         }
@@ -184,7 +248,6 @@ export const incomeApiService = {
 
     } catch (error) {
       console.error('Error fetching incomes by period:', error);
-      // Fallback: devolver array vacío si falla
       return [];
     }
   },
@@ -246,7 +309,6 @@ export const incomeApiService = {
 
     } catch (error) {
       console.error('Error fetching filter options:', error);
-      // Fallback con opciones por defecto
       return {
         projects: [
           { value: 'proyecto-a', label: 'Proyecto A' },
@@ -282,7 +344,6 @@ export const incomeApiService = {
     try {
       const params = new URLSearchParams();
       
-      // Convertir filtros a parámetros de query
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
           params.append(key, value.toString());
@@ -464,7 +525,6 @@ export const incomeApiService = {
         }
       });
 
-      // Usar el método request directamente para obtener blob
       const response = await api.request({
         url: `/ingresos/export?${params.toString()}`,
         method: 'GET',
@@ -507,5 +567,4 @@ export const incomeApiService = {
   }
 };
 
-// Export default para compatibilidad
 export default incomeApiService;

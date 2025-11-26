@@ -1,4 +1,4 @@
-// src/pages/Gastos/CostsIndex.tsx
+// src/pages/Costs/CostsIndex.tsx
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { costsApiService, CostsFilters, CostsData, CostItem, CostsByCategory } from '../../services/costsService';

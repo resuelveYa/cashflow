@@ -18,12 +18,12 @@ const BASE_URL = ''; // apiService already adds /api prefix
 
 export const incomeStatusService = {
   async getByType(typeId: number): Promise<IncomeStatus[]> {
-    const response = await apiService.get(`${BASE_URL}/income-types/${typeId}/statuses`);
+    const response = await apiService.get<{ data: IncomeStatus[] }>(`${BASE_URL}/income-types/${typeId}/statuses`);
     return response.data;
   },
 
   async create(typeId: number, data: Partial<IncomeStatus>): Promise<{ id: number }> {
-    const response = await apiService.post(`${BASE_URL}/income-types/${typeId}/statuses`, data);
+    const response = await apiService.post<{ data: { id: number } }>(`${BASE_URL}/income-types/${typeId}/statuses`, data);
     return response.data;
   },
 

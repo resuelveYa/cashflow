@@ -15,24 +15,24 @@ const BASE_URL = ''; // apiService already adds /api prefix
 
 export const incomeTypeService = {
   async getAll(onlyActive = true): Promise<IncomeType[]> {
-    const response = await apiService.get(`${BASE_URL}/income-types`, {
+    const response = await apiService.get<{ data: IncomeType[] }>(`${BASE_URL}/income-types`, {
       params: { only_active: onlyActive }
     });
     return response.data;
   },
 
   async getById(id: number): Promise<IncomeType> {
-    const response = await apiService.get(`${BASE_URL}/income-types/${id}`);
+    const response = await apiService.get<{ data: IncomeType }>(`${BASE_URL}/income-types/${id}`);
     return response.data;
   },
 
   async getFields(id: number): Promise<VisibleFields> {
-    const response = await apiService.get(`${BASE_URL}/income-types/${id}/fields`);
+    const response = await apiService.get<{ data: VisibleFields }>(`${BASE_URL}/income-types/${id}/fields`);
     return response.data;
   },
 
   async create(data: Partial<IncomeType>): Promise<{ id: number }> {
-    const response = await apiService.post(`${BASE_URL}/income-types`, data);
+    const response = await apiService.post<{ data: { id: number } }>(`${BASE_URL}/income-types`, data);
     return response.data;
   },
 
@@ -46,14 +46,14 @@ export const incomeTypeService = {
 
   // Categories
   async getCategories(typeId: number, onlyActive = true): Promise<IncomeCategory[]> {
-    const response = await apiService.get(`${BASE_URL}/income-types/${typeId}/categories`, {
+    const response = await apiService.get<{ data: IncomeCategory[] }>(`${BASE_URL}/income-types/${typeId}/categories`, {
       params: { only_active: onlyActive }
     });
     return response.data;
   },
 
   async createCategory(typeId: number, data: Partial<IncomeCategory>): Promise<{ id: number }> {
-    const response = await apiService.post(`${BASE_URL}/income-types/${typeId}/categories`, data);
+    const response = await apiService.post<{ data: { id: number } }>(`${BASE_URL}/income-types/${typeId}/categories`, data);
     return response.data;
   },
 
@@ -67,14 +67,14 @@ export const incomeTypeService = {
 
   // Statuses
   async getStatuses(typeId: number, onlyActive = true): Promise<IncomeStatus[]> {
-    const response = await apiService.get(`${BASE_URL}/income-types/${typeId}/statuses`, {
+    const response = await apiService.get<{ data: IncomeStatus[] }>(`${BASE_URL}/income-types/${typeId}/statuses`, {
       params: { only_active: onlyActive }
     });
     return response.data;
   },
 
   async createStatus(typeId: number, data: Partial<IncomeStatus>): Promise<{ id: number }> {
-    const response = await apiService.post(`${BASE_URL}/income-types/${typeId}/statuses`, data);
+    const response = await apiService.post<{ data: { id: number } }>(`${BASE_URL}/income-types/${typeId}/statuses`, data);
     return response.data;
   },
 

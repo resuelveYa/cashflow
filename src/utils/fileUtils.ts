@@ -1,5 +1,4 @@
 import * as XLSX from 'xlsx';
-import { Remuneracion } from '../types/CC/remuneracion';
 
 
 // Función para leer archivos Excel

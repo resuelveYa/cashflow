@@ -1,9 +1,30 @@
-// src/services/costsService.ts - Actualizado para usar backend real
+// src/services/costsService.ts
 import api from './apiService';
-import { OrdenCompra as ImportedOrdenCompra } from '../types/CC/ordenCompra';
 
-// Re-export the OrdenCompra type from the new types file
-export type OrdenCompra = ImportedOrdenCompra;
+// ==========================================
+// DEFINIR OrdenCompra DIRECTAMENTE AQUÍ
+// ==========================================
+
+export interface OrdenCompra {
+  id: number;
+  name: string;
+  order_number: string;
+  description?: string;
+  cost_center_id: number;
+  account_category_id?: number;
+  provider_name?: string;
+  amount: number;
+  date: string;
+  payment_type?: string;
+  state: string;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+  center_code?: string;
+  center_name?: string;
+  categoria_name?: string;
+  supplier_name?: string;
+}
 
 // Updated GastoFilter interface to include new filter options
 export interface GastoFilter {
@@ -69,28 +90,11 @@ export interface Subcontrato {
   companyId: number;
   notes?: string;
 }
-export interface IOrdenCompraDetail {
-  id: number
-  name: string
-  order_number: string
-  description: string
-  cost_center_id: number
-  account_category_id: number
-  provider_name: string
-  amount: number
-  date: string
-  payment_type: string
-  state: string
-  notes: string
-  created_at: string
-  updated_at: string
-  center_code: string
-  center_name: string
-  categoria_name: string
-  supplier_name: any
+
+export interface IOrdenCompraDetail extends OrdenCompra {
+  // Agregar campos adicionales si es necesario
 }
 
-// **AÑADIR TIPO COTIZACION PARA COMPATIBILIDAD**
 export interface Cotizacion {
   id: number;
   companyId?: number;
@@ -110,14 +114,13 @@ export interface Cotizacion {
   updated_at?: string;
 }
 
-// **NUEVOS TIPOS PARA LA VISTA CONSOLIDADA**
 export interface CostsData {
   totalExpenses: number;
   pendingExpenses: number;
   recentExpenses: CostItem[];
   byPeriodData: CostsByPeriod[];
   byCategoryData: CostsByCategory[];
-  emptyCategoriesData: CostsByCategory[]; // ← NUEVO
+  emptyCategoriesData: CostsByCategory[];
 }
 
 export interface CostItem {
@@ -144,12 +147,12 @@ export interface CostsByPeriod {
 }
 
 export interface CostsByCategory {
-  category_id: number;        // ← REQUERIDO
+  category_id: number;
   title: string;
   amount: number;
   count: number;
   path: string;
-  has_data: boolean;          // ← REQUERIDO
+  has_data: boolean;
   category_code?: string;
   category_group?: string;
 }
@@ -163,16 +166,15 @@ export interface CostsFilters {
   status?: string;
 }
 
-// **SERVICIO ACTUALIZADO QUE USA BACKEND REAL**
+// ==========================================
+// SERVICIO DE COSTOS
+// ==========================================
+
 export const costsApiService = {
-  /**
-   * Obtener datos consolidados de costos desde la vista multidimensional
-   */
   async getCostsData(filters: CostsFilters): Promise<CostsData> {
     try {
       const params = new URLSearchParams();
       
-      // Añadir filtros a los parámetros
       if (filters.periodType) params.append('period_type', filters.periodType);
       if (filters.year) params.append('year', filters.year);
       if (filters.projectId && filters.projectId !== 'all') {
@@ -188,7 +190,6 @@ export const costsApiService = {
         params.append('status', filters.status);
       }
 
-      // **LLAMADA AL ENDPOINT MULTIDIMENSIONAL**
       const response = await api.get<{
         success: boolean;
         data: {
@@ -198,7 +199,7 @@ export const costsApiService = {
           };
           items: CostItem[];
           by_category: Array<{
-            category_id?: number;      // ← Añadido como opcional desde backend
+            category_id?: number;
             category_name: string;
             total_amount: number;
             cost_count: number;
@@ -210,29 +211,26 @@ export const costsApiService = {
         throw new Error('Error al obtener datos de costos');
       }
 
-      // **TRANSFORMAR DATOS PARA LA VISTA**
       const { summary, items, by_category } = response.data;
 
-      // Transformar categorías para las cards - CORREGIDO
       const byCategoryData: CostsByCategory[] = by_category.map((cat, index) => ({
-        category_id: cat.category_id || index + 1,  // ← AGREGADO: usar ID del backend o un fallback
+        category_id: cat.category_id || index + 1,
         title: cat.category_name || 'Sin Categoría',
         amount: parseFloat(cat.total_amount.toString()) || 0,
         count: cat.cost_count || 0,
         path: `/costs/category/${encodeURIComponent(cat.category_name || 'sin-categoria')}`,
-        has_data: (cat.cost_count || 0) > 0        // ← AGREGADO: has_data basado en si tiene registros
+        has_data: (cat.cost_count || 0) > 0
       }));
 
-      // Items recientes (últimos 10)
       const recentExpenses = items.slice(0, 10);
 
       return {
         totalExpenses: parseFloat(summary.total_expenses.toString()) || 0,
         pendingExpenses: summary.pending_count || 0,
         recentExpenses,
-        byPeriodData: [], // Se calculará después con los períodos
+        byPeriodData: [],
         byCategoryData,
-        emptyCategoriesData: []  // ← AGREGADO: inicializar como array vacío
+        emptyCategoriesData: []
       };
 
     } catch (error) {
@@ -241,28 +239,18 @@ export const costsApiService = {
     }
   },
 
-  /**
-   * Obtener datos por período para la tabla financiera
-   */
   async getCostsByPeriod(filters: CostsFilters): Promise<CostsByPeriod[]> {
     try {
-      console.log('🔄 getCostsByPeriod called with filters:', filters);
-      
       const params = new URLSearchParams();
       
-      // Añadir filtros
       Object.entries(filters).forEach(([key, value]) => {
         if (value && value !== 'all') {
-          // Mapear nombres de filtros al formato del backend
           const backendKey = key === 'costCenterId' ? 'cost_center_id' : 
                            key === 'categoryId' ? 'category_id' : key;
           params.append(backendKey, value.toString());
         }
       });
 
-      console.log('📡 API call: /costs/by-period?' + params.toString());
-
-      // Llamada específica para datos por período
       const response = await api.get<{
         success: boolean;
         data: Array<{
@@ -272,58 +260,42 @@ export const costsApiService = {
         }>;
       }>(`/costs/by-period?${params.toString()}`);
 
-      console.log('📡 Backend response:', response);
-
       if (!response.success) {
         throw new Error('Error al obtener datos por período');
       }
 
       if (!response.data || response.data.length === 0) {
-        console.log('⚠️ No period data returned from backend');
         return [];
       }
 
-      console.log(`📊 Backend returned ${response.data.length} period-category combinations`);
-
-      // **AGRUPAR POR CATEGORÍA Y PERÍODO - USANDO DIRECTAMENTE period_key**
       const groupedData: Record<string, Record<string, number>> = {};
       
       response.data.forEach(item => {
         const category = item.category_name || 'Sin Categoría';
-        const periodKey = item.period_key; // ← SIN TRANSFORMACIÓN: usar directamente '2025-05'
+        const periodKey = item.period_key;
         const amount = parseFloat(item.total_amount.toString()) || 0;
-
-        console.log(`📊 Processing: ${category} -> ${periodKey} = ${amount}`);
 
         if (!groupedData[category]) {
           groupedData[category] = {};
         }
         
-        groupedData[category][periodKey] = amount; // ← USAR DIRECTAMENTE period_key
+        groupedData[category][periodKey] = amount;
       });
 
-      console.log('📊 Grouped data:', groupedData);
-
-      // Convertir a formato esperado por FinancialTable
       const result = Object.entries(groupedData).map(([category, amounts]) => ({
         category,
         path: `/costs/category/${encodeURIComponent(category)}`,
-        amounts // ← amounts ahora tiene keys como '2025-05' que coinciden con los IDs de períodos
+        amounts
       }));
 
-      console.log('📊 Final transformed result:', result);
       return result;
 
     } catch (error) {
       console.error('Error fetching costs by period:', error);
-      // Fallback: devolver array vacío si falla
       return [];
     }
   },
 
-  /**
-   * Obtener opciones dinámicas para filtros
-   */
   async getFilterOptions(): Promise<{
     projects: Array<{value: string, label: string}>;
     costCenters: Array<{value: string, label: string}>;
@@ -378,229 +350,66 @@ export const costsApiService = {
 
     } catch (error) {
       console.error('Error fetching filter options:', error);
-      // Fallback con opciones por defecto
       return {
-        projects: [
-          { value: 'proyecto-a', label: 'Proyecto A' },
-          { value: 'proyecto-b', label: 'Proyecto B' }
-        ],
-        costCenters: [
-          { value: 'cc-1', label: 'Centro 1' },
-          { value: 'cc-2', label: 'Centro 2' }
-        ],
-        categories: [
-          { value: 'cat-1', label: 'Remuneraciones' },
-          { value: 'cat-2', label: 'Materiales' }
-        ],
-        statuses: [
-          { value: 'pendiente', label: 'Pendiente' },
-          { value: 'aprobado', label: 'Aprobado' }
-        ]
+        projects: [],
+        costCenters: [],
+        categories: [],
+        statuses: []
       };
     }
   },
 
-  // **MÉTODOS EXISTENTES ACTUALIZADOS (orden de compra específica)**
+  // Métodos de OrdenCompra - Comentados porque el endpoint no existe en el backend
   async getOrdenesCompra(filters: GastoFilter = {}): Promise<OrdenCompra[]> {
-    try {
-      const params = new URLSearchParams();
-      
-      // Convertir filtros a parámetros de query
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          params.append(key, value.toString());
-        }
-      });
-
-      const response = await api.get<{
-        success: boolean;
-        data: OrdenCompra[];
-      }>(`/purchase-orders?${params.toString()}`);
-
-      if (!response.success) {
-        throw new Error('Error al obtener órdenes de compra');
-      }
-
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching órdenes de compra:', error);
-      throw new Error('Error al cargar órdenes de compra');
-    }
+    console.warn('⚠️ getOrdenesCompra: Endpoint /purchase-orders no implementado en backend');
+    return [];
   },
 
   async getOrdenCompraById(id: number): Promise<IOrdenCompraDetail | null> {
-    console.log('🔍 Fetching orden de compra by ID:', id);
-    // const ordenes = await getMockOrdenesCompra();
-    // return ordenes.find(orden => orden.id === id) || null;
-    try {
-        const response = await api.get<{success: boolean, data: IOrdenCompraDetail}>(`/ordenes-compra/${id}`);
-        console.log('🔍 Orden de compra fetched:', response.data);
-        return response.data;
-      } catch (error) {
-        console.error(`Error fetching project ${id}:`, error);
-        throw new Error('Failed to fetch project details');
-      }
+    console.warn('⚠️ getOrdenCompraById: Endpoint /ordenes-compra no implementado en backend');
+    return null;
   },
 
   async createOrdenCompra(data: Partial<OrdenCompra>): Promise<OrdenCompra> {
-    try {
-      const response = await api.post<{
-        success: boolean;
-        data: OrdenCompra;
-      }>('/purchase-orders', data);
-
-      if (!response.success) {
-        throw new Error('Error al crear orden de compra');
-      }
-
-      return response.data;
-    } catch (error) {
-      console.error('Error creating orden de compra:', error);
-      throw new Error('Error al crear orden de compra');
-    }
+    throw new Error('⚠️ createOrdenCompra: Endpoint /purchase-orders no implementado en backend');
   },
 
   async updateOrdenCompra(id: number, data: Partial<IOrdenCompraDetail>): Promise<IOrdenCompraDetail> {
-    // Mock implementation
-    const existingOrden = await this.getOrdenCompraById(id);
-    if (!existingOrden) {
-      throw new Error('Orden de compra not found');
-    }
-    return { ...existingOrden, ...data };
+    throw new Error('⚠️ updateOrdenCompra: Endpoint no implementado en backend');
   },
 
   async deleteOrdenCompra(id: number): Promise<boolean> {
-    try {
-      const response = await api.delete<{
-        success: boolean;
-      }>(`/purchase-orders/${id}`);
-
-      return response.success;
-    } catch (error) {
-      console.error(`Error deleting orden de compra ${id}:`, error);
-      return false;
-    }
+    console.warn('⚠️ deleteOrdenCompra: Endpoint /purchase-orders no implementado en backend');
+    return false;
   },
 
   async exportOrdenesCompra(filters: GastoFilter = {}): Promise<Blob> {
-    try {
-      const params = new URLSearchParams();
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          params.append(key, value.toString());
-        }
-      });
-
-      // Usar el método request directamente para obtener blob
-      const response = await api.request({
-        url: `/purchase-orders/export?${params.toString()}`,
-        method: 'GET',
-        responseType: 'blob'
-      });
-
-      return response.data;
-    } catch (error) {
-      console.error('Error exporting órdenes de compra:', error);
-      throw new Error('Error al exportar órdenes de compra');
-    }
+    throw new Error('⚠️ exportOrdenesCompra: Endpoint no implementado en backend');
   },
 
-  // **MÉTODOS PARA COTIZACIONES (COMPATIBILIDAD)**
+  // Métodos de Cotizaciones - Comentados porque el endpoint no existe
   async getCotizaciones(filters: GastoFilter = {}): Promise<Cotizacion[]> {
-    try {
-      const params = new URLSearchParams();
-      
-      // Convertir filtros a parámetros de query
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          params.append(key, value.toString());
-        }
-      });
-
-      const response = await api.get<{
-        success: boolean;
-        data: Cotizacion[];
-      }>(`/cotizaciones?${params.toString()}`);
-
-      if (!response.success) {
-        throw new Error('Error al obtener cotizaciones');
-      }
-
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching cotizaciones:', error);
-      throw new Error('Error al cargar cotizaciones');
-    }
+    console.warn('⚠️ getCotizaciones: Endpoint /cotizaciones no implementado en backend');
+    return [];
   },
 
   async getCotizacionById(id: number): Promise<Cotizacion> {
-    try {
-      const response = await api.get<{
-        success: boolean;
-        data: Cotizacion;
-      }>(`/cotizaciones/${id}`);
-
-      if (!response.success) {
-        throw new Error('Error al obtener cotización');
-      }
-
-      return response.data;
-    } catch (error) {
-      console.error(`Error fetching cotizacion ${id}:`, error);
-      throw new Error('Error al cargar cotización');
-    }
+    throw new Error('⚠️ getCotizacionById: Endpoint no implementado en backend');
   },
 
   async createCotizacion(data: Omit<Cotizacion, 'id'>): Promise<Cotizacion> {
-    try {
-      const response = await api.post<{
-        success: boolean;
-        data: Cotizacion;
-      }>('/cotizaciones', data);
-
-      if (!response.success) {
-        throw new Error('Error al crear cotización');
-      }
-
-      return response.data;
-    } catch (error) {
-      console.error('Error creating cotizacion:', error);
-      throw new Error('Error al crear cotización');
-    }
+    throw new Error('⚠️ createCotizacion: Endpoint no implementado en backend');
   },
 
   async updateCotizacion(id: number, data: Partial<Cotizacion>): Promise<Cotizacion> {
-    try {
-      const response = await api.put<{
-        success: boolean;
-        data: Cotizacion;
-      }>(`/cotizaciones/${id}`, data);
-
-      if (!response.success) {
-        throw new Error('Error al actualizar cotización');
-      }
-
-      return response.data;
-    } catch (error) {
-      console.error(`Error updating cotizacion ${id}:`, error);
-      throw new Error('Error al actualizar cotización');
-    }
+    throw new Error('⚠️ updateCotizacion: Endpoint no implementado en backend');
   },
 
   async deleteCotizacion(id: number): Promise<boolean> {
-    try {
-      const response = await api.delete<{
-        success: boolean;
-      }>(`/cotizaciones/${id}`);
-
-      return response.success;
-    } catch (error) {
-      console.error(`Error deleting cotizacion ${id}:`, error);
-      return false;
-    }
+    console.warn('⚠️ deleteCotizacion: Endpoint no implementado en backend');
+    return false;
   },
 
-  // **MÉTODO DE DEBUG**
   async getDebugData(): Promise<any> {
     try {
       const response = await api.get<{
@@ -622,8 +431,5 @@ export const costsApiService = {
   }
 };
 
-// **EXPORT gastosApiService PARA COMPATIBILIDAD**
 export const gastosApiService = costsApiService;
-
-// Export default for backward compatibility
 export default costsApiService;

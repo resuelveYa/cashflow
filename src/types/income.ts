@@ -1,5 +1,5 @@
 // src/types/income.ts
-// Tipos TypeScript para sistema dinámico de ingresos
+// Tipos TypeScript para sistema dinámico de ingresos - VERSIÓN CORREGIDA
 
 export interface IncomeType {
   id: number;
@@ -9,7 +9,7 @@ export interface IncomeType {
   icon?: string;
   color?: string;
 
-  // Campos show_* (12 campos opcionales)
+  // Campos show_* (15 campos opcionales - CORREGIDO)
   show_amount: boolean;
   show_category: boolean;
   show_payment_date: boolean;
@@ -19,8 +19,11 @@ export interface IncomeType {
   show_currency: boolean;
   show_exchange_rate: boolean;
   show_invoice_number: boolean;
+  show_tax_amount: boolean;        // ✅ AGREGADO
+  show_net_amount: boolean;        // ✅ AGREGADO
+  show_total_amount: boolean;      // ✅ AGREGADO
 
-  // Campos required_* (16 campos: 4 base + 12 opcionales)
+  // Campos required_* (19 campos: 4 base + 15 opcionales - CORREGIDO)
   required_name: boolean;
   required_date: boolean;
   required_status: boolean;
@@ -34,6 +37,9 @@ export interface IncomeType {
   required_currency: boolean;
   required_exchange_rate: boolean;
   required_invoice_number: boolean;
+  required_tax_amount: boolean;    // ✅ AGREGADO
+  required_net_amount: boolean;    // ✅ AGREGADO
+  required_total_amount: boolean;  // ✅ AGREGADO
 
   is_active: boolean;
   created_by?: number;
@@ -71,12 +77,16 @@ export interface IncomeData {
   id: number;
   income_type_id: number;
   organization_id: string;
+  
+  // Campos base
   name?: string;
   description?: string;
   notes?: string;
   date?: string;
   status_id?: number;
   cost_center_id?: number;
+  
+  // Campos opcionales originales
   amount?: number;
   category_id?: number;
   payment_date?: string;
@@ -86,10 +96,19 @@ export interface IncomeData {
   currency?: string;
   exchange_rate?: number;
   invoice_number?: string;
+  
+  // Campos adicionales de montos - ✅ AGREGADOS
+  tax_amount?: number;
+  net_amount?: number;
+  total_amount?: number;
+  
+  // Metadatos
   created_by?: number;
   updated_by?: number;
   created_at: string;
   updated_at: string;
+  
+  // Campos relacionados (joins)
   income_type_name?: string;
   status_name?: string;
   status_color?: string;
@@ -124,15 +143,28 @@ export interface IncomeFilters {
   cost_center_id?: number;
   date_from?: string;
   date_to?: string;
-  payment_status?: 'pendiente' | 'parcial' | 'pagado' | 'anulado';
+  payment_status?: string;
   search?: string;
-  limit?: number;
   offset?: number;
+  limit?: number;
 }
 
-export interface PaginationInfo {
-  total: number;
-  limit: number;
-  offset: number;
-  hasMore: boolean;
+// Tipos auxiliares para el formulario
+export type IncomeFormMode = 'create' | 'edit' | 'view';
+
+export interface IncomeFormProps {
+  mode: IncomeFormMode;
+  incomeId?: number;
+  typeId?: number;
+  onSuccess?: (income: IncomeData) => void;
+  onCancel?: () => void;
+}
+
+// Tipo para respuestas de la API
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  message?: string;
+  errors?: ValidationError[];
+  warnings?: ValidationError[];
 }
