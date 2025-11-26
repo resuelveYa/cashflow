@@ -1,5 +1,5 @@
 // src/types/income.ts
-// Tipos TypeScript para sistema dinámico de ingresos - VERSIÓN CORREGIDA
+// Tipos TypeScript para sistema dinámico de ingresos - VERSIÓN COMPLETA CORREGIDA
 
 export interface IncomeType {
   id: number;
@@ -19,9 +19,9 @@ export interface IncomeType {
   show_currency: boolean;
   show_exchange_rate: boolean;
   show_invoice_number: boolean;
-  show_tax_amount: boolean;        // ✅ AGREGADO
-  show_net_amount: boolean;        // ✅ AGREGADO
-  show_total_amount: boolean;      // ✅ AGREGADO
+  show_tax_amount: boolean;
+  show_net_amount: boolean;
+  show_total_amount: boolean;
 
   // Campos required_* (19 campos: 4 base + 15 opcionales - CORREGIDO)
   required_name: boolean;
@@ -37,9 +37,9 @@ export interface IncomeType {
   required_currency: boolean;
   required_exchange_rate: boolean;
   required_invoice_number: boolean;
-  required_tax_amount: boolean;    // ✅ AGREGADO
-  required_net_amount: boolean;    // ✅ AGREGADO
-  required_total_amount: boolean;  // ✅ AGREGADO
+  required_tax_amount: boolean;
+  required_net_amount: boolean;
+  required_total_amount: boolean;
 
   is_active: boolean;
   created_by?: number;
@@ -97,7 +97,7 @@ export interface IncomeData {
   exchange_rate?: number;
   invoice_number?: string;
   
-  // Campos adicionales de montos - ✅ AGREGADOS
+  // Campos adicionales de montos
   tax_amount?: number;
   net_amount?: number;
   total_amount?: number;
@@ -116,6 +116,23 @@ export interface IncomeData {
   cost_center_name?: string;
   created_by_email?: string;
   updated_by_email?: string;
+  
+  // Campos adicionales para dashboard
+  totalIncomes?: number;
+  pendingIncomes?: number;
+  byClientData?: Array<{
+    client_id: number;
+    client_name: string;
+    total_amount: number;
+    has_data: boolean;
+  }>;
+  byCenterData?: Array<{
+    cost_center_id: number;
+    cost_center_name: string;
+    total_amount: number;
+    has_data: boolean;
+  }>;
+  recentIncomes?: IncomeItem[];
 }
 
 export interface FieldDefinition {
@@ -147,6 +164,8 @@ export interface IncomeFilters {
   search?: string;
   offset?: number;
   limit?: number;
+  periodType?: 'weekly' | 'monthly' | 'quarterly' | 'annual';
+  year?: string;
 }
 
 // Tipos auxiliares para el formulario
@@ -167,4 +186,53 @@ export interface ApiResponse<T> {
   message?: string;
   errors?: ValidationError[];
   warnings?: ValidationError[];
+}
+
+// ✅ AGREGADOS - Tipos adicionales necesarios
+
+export interface Income extends IncomeData {}
+
+export interface IncomeFilter extends IncomeFilters {}
+
+export interface IncomeStats {
+  total_amount: number;
+  total_count: number;
+  pending_count: number;
+  by_type: Array<{
+    type_id: number;
+    type_name: string;
+    count: number;
+    total_amount: number;
+  }>;
+  by_status: Array<{
+    status_id: number;
+    status_name: string;
+    count: number;
+    total_amount: number;
+  }>;
+}
+
+export interface IncomeItem {
+  id: number;
+  name: string;
+  amount: number;
+  total_amount: number;
+  date: string;
+  status_name: string;
+  status_color: string;
+  income_type_name: string;
+  category_name?: string;
+  cost_center_name?: string;
+}
+
+export interface IncomeDetail extends IncomeData {
+  // Campos adicionales para vista de detalle
+  history?: Array<{
+    id: number;
+    field: string;
+    old_value: string;
+    new_value: string;
+    changed_at: string;
+    changed_by: string;
+  }>;
 }

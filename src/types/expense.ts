@@ -1,5 +1,5 @@
 // src/types/expense.ts
-// Tipos TypeScript para sistema dinámico de egresos
+// Tipos TypeScript para sistema dinámico de egresos - VERSIÓN CORREGIDA
 
 export interface ExpenseType {
   id: number;
@@ -9,7 +9,7 @@ export interface ExpenseType {
   icon?: string;
   color?: string;
 
-  // Campos show_* (12 campos opcionales)
+  // Campos show_* (15 campos opcionales - CORREGIDOS)
   show_amount: boolean;
   show_category: boolean;
   show_payment_date: boolean;
@@ -19,8 +19,11 @@ export interface ExpenseType {
   show_currency: boolean;
   show_exchange_rate: boolean;
   show_invoice_number: boolean;
+  show_tax_amount: boolean;        // ✅ AGREGADO
+  show_net_amount: boolean;        // ✅ AGREGADO
+  show_total_amount: boolean;      // ✅ AGREGADO
 
-  // Campos required_* (16 campos: 4 base + 12 opcionales)
+  // Campos required_* (19 campos: 4 base + 15 opcionales - CORREGIDOS)
   required_name: boolean;
   required_date: boolean;
   required_status: boolean;
@@ -34,6 +37,9 @@ export interface ExpenseType {
   required_currency: boolean;
   required_exchange_rate: boolean;
   required_invoice_number: boolean;
+  required_tax_amount: boolean;    // ✅ AGREGADO
+  required_net_amount: boolean;    // ✅ AGREGADO
+  required_total_amount: boolean;  // ✅ AGREGADO
 
   is_active: boolean;
   created_by?: number;
@@ -86,6 +92,12 @@ export interface ExpenseData {
   currency?: string;
   exchange_rate?: number;
   invoice_number?: string;
+  
+  // ✅ AGREGADOS - Campos adicionales de montos
+  tax_amount?: number;
+  net_amount?: number;
+  total_amount?: number;
+  
   created_by?: number;
   updated_by?: number;
   created_at: string;
@@ -124,15 +136,29 @@ export interface ExpenseFilters {
   cost_center_id?: number;
   date_from?: string;
   date_to?: string;
-  payment_status?: 'pendiente' | 'parcial' | 'pagado' | 'anulado';
+  payment_status?: string;
+  payment_method?: string;
   search?: string;
-  limit?: number;
   offset?: number;
+  limit?: number;
 }
 
-export interface PaginationInfo {
-  total: number;
-  limit: number;
-  offset: number;
-  hasMore: boolean;
+// Tipos auxiliares para el formulario
+export type ExpenseFormMode = 'create' | 'edit' | 'view';
+
+export interface ExpenseFormProps {
+  mode: ExpenseFormMode;
+  expenseId?: number;
+  typeId?: number;
+  onSuccess?: (expense: ExpenseData) => void;
+  onCancel?: () => void;
+}
+
+// Tipo para respuestas de la API
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  message?: string;
+  errors?: ValidationError[];
+  warnings?: ValidationError[];
 }
