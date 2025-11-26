@@ -45,7 +45,6 @@ export interface CashFlowSummary {
   pendingItems: number;
   totalItems: number;
   previousPeriodChange?: number;
-  // Desglose por tipo de gasto
   costsExpense: number;
   remuneracionesExpense: number;
 }
