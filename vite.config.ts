@@ -31,5 +31,11 @@ export default defineConfig({
       }
     },
     allowedHosts: ['.ngrok-free.app'], // útil pero no esencial con host: true
+  },
+  preview: {
+    host: true,
+    port: 4173,
+    strictPort: false,
+    allowedHosts: ['app.resuelveya.cl', 'localhost']
   }
 });
