@@ -36,6 +36,6 @@ export default defineConfig({
     host: true,
     port: 4173,
     strictPort: false,
-    allowedHosts: ['app.resuelveya.cl', 'localhost']
+    allowedHosts: ['app.resuelveya.cl', 'cashflow.resuelveya.cl', 'localhost']
   }
 });
