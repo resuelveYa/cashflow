@@ -1,0 +1,140 @@
+name: Deploy Cashflow to Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy Cashflow App
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build Next.js app
+        env:
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          BACKEND_API_URL: https://api.resuelveya.cl/api
+        run: npm run build
+      
+      - name: Create deployment package
+        run: |
+          mkdir -p deploy
+          cp -r .next/standalone/* deploy/
+          cp -r .next/static deploy/.next/static
+          cp -r public deploy/public 2>/dev/null || true
+          cp ecosystem.config.js deploy/ 2>/dev/null || echo "module.exports = {apps: [{name: 'cashflow', script: 'server.js', env: {PORT: 3002}}]}" > deploy/ecosystem.config.js
+          tar -czf cashflow-deploy.tar.gz -C deploy .
+      
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+      
+      - name: Add server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+      
+      - name: Deploy to VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USERNAME: ${{ secrets.VPS_USERNAME }}
+        run: |
+          # Upload package
+          scp cashflow-deploy.tar.gz $VPS_USERNAME@$VPS_HOST:/tmp/
+          
+          # Deploy
+          ssh $VPS_USERNAME@$VPS_HOST << 'ENDSSH'
+            set -e
+            
+            echo "🚀 Deploying Cashflow..."
+            
+            cd /var/www/cashflow || { echo "❌ Directory not found"; exit 1; }
+            
+            # Backup
+            echo "💾 Creating backup..."
+            tar -czf ../cashflow-backup-$(date +%Y%m%d-%H%M%S).tar.gz . || true
+            
+            # Extract
+            echo "📦 Extracting new version..."
+            tar -xzf /tmp/cashflow-deploy.tar.gz
+            rm /tmp/cashflow-deploy.tar.gz
+            
+            # Update environment
+            cat > .env.production << 'ENVEOF'
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY }}
+          BACKEND_API_URL=https://api.resuelveya.cl/api
+          NODE_ENV=production
+          PORT=3002
+          ENVEOF
+            
+            # Restart
+            echo "🔄 Restarting service..."
+            pm2 restart cashflow || pm2 start ecosystem.config.js --name cashflow
+            pm2 save
+            
+            echo "✅ Deployment completed!"
+          ENDSSH
+      
+      - name: Health Check
+        run: |
+          echo "🏥 Checking cashflow app..."
+          sleep 10
+          
+          for i in {1..5}; do
+            if curl -f https://app.resuelveya.cl; then
+              echo "✅ Cashflow app is healthy!"
+              exit 0
+            fi
+            echo "⏳ Attempt $i failed, retrying..."
+            sleep 5
+          done
+          
+          echo "❌ Health check failed"
+          exit 1
+      
+      - name: Rollback on failure
+        if: failure()
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USERNAME: ${{ secrets.VPS_USERNAME }}
+        run: |
+          echo "🔙 Rolling back..."
+          ssh $VPS_USERNAME@$VPS_HOST << 'ENDSSH'
+            cd /var/www/cashflow
+            LATEST_BACKUP=$(ls -t ../cashflow-backup-*.tar.gz 2>/dev/null | head -1)
+            if [ -n "$LATEST_BACKUP" ]; then
+              echo "Restoring from $LATEST_BACKUP"
+              rm -rf *
+              tar -xzf "$LATEST_BACKUP"
+              pm2 restart cashflow
+              echo "✅ Rollback completed"
+            fi
+          ENDSSH
+      
+      - name: Cleanup old backups
+        if: success()
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USERNAME: ${{ secrets.VPS_USERNAME }}
+        run: |
+          ssh $VPS_USERNAME@$VPS_HOST << 'ENDSSH'
+            cd /var/www
+            ls -t cashflow-backup-*.tar.gz 2>/dev/null | tail -n +4 | xargs rm -f
+          ENDSSH
