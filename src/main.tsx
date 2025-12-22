@@ -17,11 +17,11 @@ if (!clerkPubKey) {
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ClerkProvider 
+    <ClerkProvider
       publishableKey={clerkPubKey}
-      afterSignOutUrl="http://localhost:3000"
-      signInUrl="http://localhost:3000/sign-in"
-      signUpUrl="http://localhost:3000/sign-up"
+      afterSignOutUrl={import.meta.env.VITE_CLERK_AFTER_SIGN_IN_URL || "http://localhost:5173"}
+      signInUrl={import.meta.env.VITE_CLERK_SIGN_IN_URL || "http://localhost:3000/sign-in"}
+      signUpUrl={import.meta.env.VITE_CLERK_SIGN_UP_URL || "http://localhost:3000/sign-up"}
     >
       <ThemeProvider>
         <AppWrapper>
