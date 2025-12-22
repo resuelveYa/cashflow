@@ -1,8 +1,9 @@
 // saerti-admin/src/services/apiService.ts
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { ENV } from '../config/env';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT) || 30000;
+const API_BASE_URL = ENV.API.BASE_URL;
+const API_TIMEOUT = ENV.API.TIMEOUT;
 
 // Create axios instance
 const apiClient = axios.create({
@@ -28,7 +29,7 @@ apiClient.interceptors.request.use(
       // ✅ Obtener token fresco desde Clerk
       if (getTokenFunction) {
         const token = await getTokenFunction();
-        
+
         console.log('[API Request]', {
           url: config.url,
           method: config.method,
@@ -42,7 +43,7 @@ apiClient.interceptors.request.use(
         if (config.params?.cost_center_id) {
           console.log('🎯 [API] FILTRANDO POR CENTRO DE COSTO:', config.params.cost_center_id);
         }
-        
+
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         } else {
@@ -54,7 +55,7 @@ apiClient.interceptors.request.use(
     } catch (error) {
       console.error('[API] ❌ Error obteniendo token:', error);
     }
-    
+
     return config;
   },
   (error) => {
@@ -82,12 +83,12 @@ apiClient.interceptors.response.use(
 
     if (error.response?.status === 401) {
       console.error('[API] 🚨 401 UNAUTHORIZED - Token inválido o expirado');
-      
+
       // Redirigir al sign-in de tu app Next.js
       const redirectUrl = encodeURIComponent(window.location.href);
-      window.location.href = `http://localhost:3000/sign-in?redirect_url=${redirectUrl}`;
+      window.location.href = `${ENV.CLERK.SIGN_IN_URL}?redirect_url=${redirectUrl}`;
     }
-    
+
     return Promise.reject(error);
   }
 );

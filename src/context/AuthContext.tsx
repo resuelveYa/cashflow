@@ -1,9 +1,9 @@
 import { createContext, useContext, ReactNode, useState } from 'react';
 import { useUser, useClerk } from '@clerk/clerk-react';
-import { 
-  User, 
-  LoginCredentials, 
-  RegisterData, 
+import {
+  User,
+  LoginCredentials,
+  RegisterData,
   UpdateProfileData,
   UpdateMetaData,
   UpdateAddressData,
@@ -15,20 +15,20 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-  
+
   // Authentication methods (deprecados pero mantenidos para compatibilidad)
   login: (email: string, password: string) => Promise<boolean>;
   loginWithCredentials: (credentials: LoginCredentials) => Promise<void>;
   register: (userData: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
-  
+
   // Profile management
   updateProfile: (data: UpdateProfileData) => Promise<void>;
   updateMeta: (data: UpdateMetaData) => Promise<void>;
   updateAddress: (data: UpdateAddressData) => Promise<void>;
   uploadAvatar: (file: File) => Promise<void>;
   refreshUser: () => Promise<void>;
-  
+
   // Utility methods
   clearError: () => void;
 }
@@ -51,27 +51,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Login - redirige a Clerk SignIn
   const login = async (email: string, password: string): Promise<boolean> => {
     console.warn('login() está deprecado con Clerk. Usa el flujo de Clerk.');
-    openSignIn({ redirectUrl: 'http://localhost:5173' });
+    openSignIn({ redirectUrl: ENV.URLS.APP });
     return false;
   };
 
   // Login with credentials - redirige a Clerk SignIn
   const loginWithCredentials = async (credentials: LoginCredentials): Promise<void> => {
     console.warn('loginWithCredentials() está deprecado con Clerk. Usa el flujo de Clerk.');
-    openSignIn({ redirectUrl: 'http://localhost:5173' });
+    openSignIn({ redirectUrl: ENV.URLS.APP });
   };
 
   // Register - redirige a Clerk SignUp
   const register = async (userData: RegisterData): Promise<void> => {
     console.warn('register() está deprecado con Clerk. Usa el flujo de Clerk.');
-    window.location.href = 'http://localhost:3000/sign-up';
+    window.location.href = ENV.CLERK.SIGN_UP_URL;
   };
 
   // Logout
   const logout = async (): Promise<void> => {
     try {
       await signOut();
-      window.location.href = 'http://localhost:3000';
+      window.location.href = ENV.URLS.LANDING;
     } catch (err) {
       console.error('Logout error:', err);
       setError('Error al cerrar sesión');
@@ -200,20 +200,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isAuthenticated: !!clerkUser && isUserLoaded,
     isLoading: !isUserLoaded,
     error,
-    
+
     // Authentication methods
     login,
     loginWithCredentials,
     register,
     logout,
-    
+
     // Profile management
     updateProfile,
     updateMeta,
     updateAddress,
     uploadAvatar,
     refreshUser,
-    
+
     // Utility methods
     clearError,
   };

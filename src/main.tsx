@@ -7,9 +7,10 @@ import App from "./App.tsx";
 import { AppWrapper } from "./components/common/PageMeta.tsx";
 import { ThemeProvider } from "./context/ThemeContext.tsx";
 import { ClerkProvider } from '@clerk/clerk-react';
+import { ENV } from './config/env';
 
 // Validar que existe la publishable key
-const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+const clerkPubKey = ENV.CLERK.PUBLISHABLE_KEY;
 
 if (!clerkPubKey) {
   throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY in .env file");
@@ -19,9 +20,9 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ClerkProvider
       publishableKey={clerkPubKey}
-      afterSignOutUrl={import.meta.env.VITE_CLERK_AFTER_SIGN_IN_URL || "http://localhost:5173"}
-      signInUrl={import.meta.env.VITE_CLERK_SIGN_IN_URL || "http://localhost:3000/sign-in"}
-      signUpUrl={import.meta.env.VITE_CLERK_SIGN_UP_URL || "http://localhost:3000/sign-up"}
+      afterSignOutUrl={ENV.CLERK.AFTER_SIGN_IN_URL}
+      signInUrl={ENV.CLERK.SIGN_IN_URL}
+      signUpUrl={ENV.CLERK.SIGN_UP_URL}
     >
       <ThemeProvider>
         <AppWrapper>
