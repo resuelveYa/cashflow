@@ -20,6 +20,7 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ClerkProvider
       publishableKey={clerkPubKey}
+      domain=".resuelveya.cl"
       afterSignOutUrl={ENV.CLERK.AFTER_SIGN_IN_URL}
       signInUrl={ENV.CLERK.SIGN_IN_URL}
       signUpUrl={ENV.CLERK.SIGN_UP_URL}
