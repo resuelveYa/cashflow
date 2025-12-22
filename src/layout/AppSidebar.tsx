@@ -40,7 +40,7 @@ const navItems: NavItem[] = [
   {
     icon: <TrendingUp className="w-5 h-5" />,
     name: "Ingresos",
-    path: "/ingresos/datos",
+    path: "/ingresos/resumen",
   },
   {
     icon: <TrendingDown className="w-5 h-5" />,
@@ -60,21 +60,6 @@ const navItems: NavItem[] = [
       { name: "Tipos de Egresos", path: "/egresos/tipos", pro: false },
     ],
   },
-  // {
-  //   icon: <Calculator />,
-  //   name: 'Análisis IA',
-  //   path: '/budget-analysis', // Cambiar href por path
-  // },
-  // {
-  //   name: "Forms",
-  //   icon: <ListIcon />,
-  //   subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
-  // },
-  // {
-  //   name: "Tables",
-  //   icon: <TableIcon />,
-  //   subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
-  // },
 ];
 
 const othersItems: NavItem[] = [

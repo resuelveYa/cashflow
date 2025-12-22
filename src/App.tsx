@@ -199,19 +199,6 @@ export default function App() {
                   <CostCentersIndex />
                 </ClerkProtectedRoute>
               } />
-              {/* Rutas de formularios comentadas - ahora se usan modales */}
-              {/*
-              <Route path="/centros-costo/nuevo" element={
-                <ClerkProtectedRoute>
-                  <CostCenterForm />
-                </ClerkProtectedRoute>
-              } />
-              <Route path="/centros-costo/:id/editar" element={
-                <ClerkProtectedRoute>
-                  <CostCenterForm />
-                </ClerkProtectedRoute>
-              } />
-              */}
 
               {/* Ingresos - Sistema dinámico */}
               <Route path="/ingresos/resumen" element={
@@ -224,19 +211,6 @@ export default function App() {
                   <IncomeTypesIndex />
                 </ClerkProtectedRoute>
               } />
-              {/* Rutas de formularios comentadas - ahora se usan modales */}
-              {/*
-              <Route path="/ingresos/tipos/nuevo" element={
-                <ClerkProtectedRoute>
-                  <IncomeTypeForm />
-                </ClerkProtectedRoute>
-              } />
-              <Route path="/ingresos/tipos/:id/editar" element={
-                <ClerkProtectedRoute>
-                  <IncomeTypeForm />
-                </ClerkProtectedRoute>
-              } />
-              */}
               <Route path="/ingresos/datos/:typeName" element={
                 <ClerkProtectedRoute>
                   <IncomeDataList />
