@@ -1,7 +1,7 @@
-// App.tsx - Simplified with native Clerk auth
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+// App.tsx - Simple Clerk auth without loops
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from 'react';
-import { useAuth, SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react';
+import { useAuth, SignIn } from '@clerk/clerk-react';
 import { setClerkTokenGetter } from "./services/apiService";
 import { AuthProvider } from "./context/AuthContext";
 import { CostCenterProvider } from "./context/CostCenterContext";
@@ -21,7 +21,6 @@ import FormElements from "./pages/Forms/FormElements";
 import Blank from "./pages/Blank";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
-import Home from "./pages/Dashboard/Home";
 import CashFlow from "./pages/CashFlow/CashFlow";
 import Cotizaciones from "./pages/Costs/Cotizaciones";
 import SubcontratosCredito from "./pages/Costs/SubcontratosCredito";
@@ -40,27 +39,22 @@ import ExpenseDataForm from './pages/DynamicExpense/ExpenseDataForm';
 import ExpenseDashboard from './pages/DynamicExpense/ExpenseDashboard';
 import CostCentersIndex from './pages/CostCenters/CostCentersIndex';
 
-// Token provider for API calls
+// Token provider
 function ClerkTokenProvider() {
-  const { getToken, isLoaded, isSignedIn, userId } = useAuth();
+  const { getToken, isLoaded, isSignedIn } = useAuth();
 
   useEffect(() => {
     if (isLoaded && isSignedIn) {
       setClerkTokenGetter(async () => {
         try {
-          const token = await getToken();
-          if (token) {
-            console.log('[ClerkTokenProvider] ✅ Token obtenido');
-            return token;
-          }
-          return null;
+          return await getToken();
         } catch (error) {
-          console.error('[ClerkTokenProvider] ❌ Error:', error);
+          console.error('[ClerkTokenProvider] Error:', error);
           return null;
         }
       });
     }
-  }, [getToken, isLoaded, isSignedIn, userId]);
+  }, [getToken, isLoaded, isSignedIn]);
 
   return null;
 }
@@ -71,72 +65,80 @@ function LoadingScreen() {
     <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="mt-4 text-gray-600 dark:text-gray-400">Inicializando aplicación...</p>
+        <p className="mt-4 text-gray-600 dark:text-gray-400">Cargando...</p>
       </div>
     </div>
   );
 }
 
+// Login page
+function LoginPage() {
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+      <SignIn routing="path" path="/sign-in" />
+    </div>
+  );
+}
+
 export default function App() {
-  const { isLoaded } = useAuth();
+  const { isLoaded, isSignedIn } = useAuth();
 
   if (!isLoaded) {
     return <LoadingScreen />;
   }
 
+  if (!isSignedIn) {
+    return <LoginPage />;
+  }
+
   return (
     <>
       <ClerkTokenProvider />
-      <SignedIn>
-        <Router>
-          <AuthProvider>
-            <CostCenterProvider>
-              <ScrollToTop />
-              <Routes>
-                <Route element={<AppLayout />}>
-                  <Route path="/" element={<ConsolidatedHome />} />
-                  <Route path="/cash-flow" element={<CashFlow />} />
-                  <Route path="/budget-analysis" element={<BudgetAnalyzer />} />
-                  <Route path="/costos" element={<EgresossIndex />} />
-                  <Route path="/costos/index" element={<EgresossIndex />} />
-                  <Route path="/costos/cotizaciones" element={<Cotizaciones />} />
-                  <Route path="/costos/subcontratos-credito" element={<SubcontratosCredito />} />
-                  <Route path="/costos/subcontratos-contado" element={<SubcontratosContado />} />
-                  <Route path="/costos/imprevistos" element={<GastosImprevistos />} />
-                  <Route path="/centros-costo" element={<CostCentersIndex />} />
-                  <Route path="/ingresos/resumen" element={<IncomeDashboard />} />
-                  <Route path="/ingresos/tipos" element={<IncomeTypesIndex />} />
-                  <Route path="/ingresos/datos/:typeName" element={<IncomeDataList />} />
-                  <Route path="/ingresos/datos/nuevo" element={<IncomeDataForm />} />
-                  <Route path="/ingresos/datos/:id/editar" element={<IncomeDataForm />} />
-                  <Route path="/egresos/resumen" element={<ExpenseDashboard />} />
-                  <Route path="/egresos/tipos" element={<ExpenseTypesIndex />} />
-                  <Route path="/egresos/datos/:typeName" element={<ExpenseDataList />} />
-                  <Route path="/egresos/datos/nuevo" element={<ExpenseDataForm />} />
-                  <Route path="/egresos/datos/:id/editar" element={<ExpenseDataForm />} />
-                  <Route path="/profile" element={<UserProfiles />} />
-                  <Route path="/calendar" element={<Calendar />} />
-                  <Route path="/blank" element={<Blank />} />
-                  <Route path="/form-elements" element={<FormElements />} />
-                  <Route path="/basic-tables" element={<BasicTables />} />
-                  <Route path="/alerts" element={<Alerts />} />
-                  <Route path="/avatars" element={<Avatars />} />
-                  <Route path="/badge" element={<Badges />} />
-                  <Route path="/buttons" element={<Buttons />} />
-                  <Route path="/images" element={<Images />} />
-                  <Route path="/videos" element={<Videos />} />
-                  <Route path="/line-chart" element={<LineChart />} />
-                  <Route path="/bar-chart" element={<BarChart />} />
-                </Route>
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </CostCenterProvider>
-          </AuthProvider>
-        </Router>
-      </SignedIn>
-      <SignedOut>
-        <RedirectToSignIn />
-      </SignedOut>
+      <Router>
+        <AuthProvider>
+          <CostCenterProvider>
+            <ScrollToTop />
+            <Routes>
+              <Route element={<AppLayout />}>
+                <Route path="/" element={<ConsolidatedHome />} />
+                <Route path="/cash-flow" element={<CashFlow />} />
+                <Route path="/budget-analysis" element={<BudgetAnalyzer />} />
+                <Route path="/costos" element={<EgresossIndex />} />
+                <Route path="/costos/index" element={<EgresossIndex />} />
+                <Route path="/costos/cotizaciones" element={<Cotizaciones />} />
+                <Route path="/costos/subcontratos-credito" element={<SubcontratosCredito />} />
+                <Route path="/costos/subcontratos-contado" element={<SubcontratosContado />} />
+                <Route path="/costos/imprevistos" element={<GastosImprevistos />} />
+                <Route path="/centros-costo" element={<CostCentersIndex />} />
+                <Route path="/ingresos/resumen" element={<IncomeDashboard />} />
+                <Route path="/ingresos/tipos" element={<IncomeTypesIndex />} />
+                <Route path="/ingresos/datos/:typeName" element={<IncomeDataList />} />
+                <Route path="/ingresos/datos/nuevo" element={<IncomeDataForm />} />
+                <Route path="/ingresos/datos/:id/editar" element={<IncomeDataForm />} />
+                <Route path="/egresos/resumen" element={<ExpenseDashboard />} />
+                <Route path="/egresos/tipos" element={<ExpenseTypesIndex />} />
+                <Route path="/egresos/datos/:typeName" element={<ExpenseDataList />} />
+                <Route path="/egresos/datos/nuevo" element={<ExpenseDataForm />} />
+                <Route path="/egresos/datos/:id/editar" element={<ExpenseDataForm />} />
+                <Route path="/profile" element={<UserProfiles />} />
+                <Route path="/calendar" element={<Calendar />} />
+                <Route path="/blank" element={<Blank />} />
+                <Route path="/form-elements" element={<FormElements />} />
+                <Route path="/basic-tables" element={<BasicTables />} />
+                <Route path="/alerts" element={<Alerts />} />
+                <Route path="/avatars" element={<Avatars />} />
+                <Route path="/badge" element={<Badges />} />
+                <Route path="/buttons" element={<Buttons />} />
+                <Route path="/images" element={<Images />} />
+                <Route path="/videos" element={<Videos />} />
+                <Route path="/line-chart" element={<LineChart />} />
+                <Route path="/bar-chart" element={<BarChart />} />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </CostCenterProvider>
+        </AuthProvider>
+      </Router>
     </>
   );
 }
