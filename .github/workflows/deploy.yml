@@ -38,6 +38,7 @@ jobs:
           cp -r dist/* deploy/
           cp ecosystem.config.cjs deploy/
           cp package.json deploy/
+          cp vite.config.ts deploy/ 2>/dev/null || true
           tar -czf cashflow-deploy.tar.gz -C deploy .
       
       - name: Setup SSH
