@@ -24,20 +24,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Build Next.js app
+      - name: Build Vite app
         env:
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
           CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
-          BACKEND_API_URL: https://api.resuelveya.cl/api
+          BACKEND_API_URL: https://resuelveya.cl/api
+          NEXT_PUBLIC_API_URL: /api/backend
         run: npm run build
       
       - name: Create deployment package
         run: |
           mkdir -p deploy
-          cp -r .next/standalone/* deploy/
-          cp -r .next/static deploy/.next/static
-          cp -r public deploy/public 2>/dev/null || true
-          cp ecosystem.config.js deploy/ 2>/dev/null || echo "module.exports = {apps: [{name: 'cashflow', script: 'server.js', env: {PORT: 3002}}]}" > deploy/ecosystem.config.js
+          cp -r dist/* deploy/
+          cp ecosystem.config.cjs deploy/
+          cp package.json deploy/
           tar -czf cashflow-deploy.tar.gz -C deploy .
       
       - name: Setup SSH
@@ -72,21 +72,26 @@ jobs:
             
             # Extract
             echo "📦 Extracting new version..."
+            rm -rf dist ecosystem.config.cjs package.json
             tar -xzf /tmp/cashflow-deploy.tar.gz
             rm /tmp/cashflow-deploy.tar.gz
+            
+            # Install production dependencies (vite is needed for preview)
+            npm install --production
+            npm install vite
             
             # Update environment
             cat > .env.production << 'ENVEOF'
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY }}
           CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY }}
-          BACKEND_API_URL=https://api.resuelveya.cl/api
+          BACKEND_API_URL=https://resuelveya.cl/api
           NODE_ENV=production
-          PORT=3002
+          PORT=3003
           ENVEOF
             
             # Restart
             echo "🔄 Restarting service..."
-            pm2 restart cashflow || pm2 start ecosystem.config.js --name cashflow
+            pm2 restart cashflow || pm2 start ecosystem.config.cjs
             pm2 save
             
             echo "✅ Deployment completed!"
@@ -98,7 +103,7 @@ jobs:
           sleep 10
           
           for i in {1..5}; do
-            if curl -f https://app.resuelveya.cl; then
+            if curl -f https://resuelveya.cl/cashflow; then
               echo "✅ Cashflow app is healthy!"
               exit 0
             fi
