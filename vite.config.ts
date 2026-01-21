@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 import svgr from "vite-plugin-svgr";
 
 export default defineConfig({
-  base: './', // 👈 clave para que los chunks .js se resuelvan bien desde ngrok
+  base: '/cashflow', // 👈 ahora configurado para sub-ruta en producción
   resolve: {
     alias: {
       '@': '/src'
@@ -36,6 +36,6 @@ export default defineConfig({
     host: true,
     port: 4173,
     strictPort: false,
-    allowedHosts: ['app.resuelveya.cl', 'cashflow.resuelveya.cl', 'localhost']
+    allowedHosts: ['app.resuelveya.cl', 'cashflow.resuelveya.cl', 'resuelveya.cl', 'localhost']
   }
 });

@@ -2,7 +2,7 @@ module.exports = {
   apps: [{
     name: 'cashflow',
     script: 'npx',
-    args: 'vite preview --port 3002 --host',
+    args: 'vite preview --port 3003 --host',
     cwd: '/var/www/cashflow',
     instances: 1,
     exec_mode: 'fork',
@@ -10,7 +10,7 @@ module.exports = {
     // Environment variables
     env: {
       NODE_ENV: 'production',
-      PORT: 3002,
+      PORT: 3003,
     },
 
     // Logging
