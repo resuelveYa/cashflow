@@ -34,8 +34,8 @@ jobs:
       
       - name: Create deployment package
         run: |
-          mkdir -p deploy
-          cp -r dist/* deploy/
+          mkdir -p deploy/dist
+          cp -r dist/* deploy/dist/
           cp ecosystem.config.cjs deploy/
           cp package.json deploy/
           cp vite.config.ts deploy/ 2>/dev/null || true
@@ -73,7 +73,7 @@ jobs:
             
             # Extract
             echo "📦 Extracting new version..."
-            rm -rf dist ecosystem.config.cjs package.json
+            rm -rf dist ecosystem.config.cjs package.json vite.config.ts
             tar -xzf /tmp/cashflow-deploy.tar.gz
             rm /tmp/cashflow-deploy.tar.gz
             
