@@ -27,6 +27,7 @@ jobs:
       - name: Build Vite app
         env:
           VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
+          VITE_CLERK_DOMAIN: resuelveya.cl
           VITE_API_URL: https://resuelveya.cl/api
           VITE_CLERK_SIGN_IN_URL: https://resuelveya.cl/sign-in
           VITE_CLERK_SIGN_UP_URL: https://resuelveya.cl/sign-up
