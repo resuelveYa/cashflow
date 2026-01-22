@@ -26,10 +26,13 @@ jobs:
       
       - name: Build Vite app
         env:
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
-          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
-          BACKEND_API_URL: https://resuelveya.cl/api
-          NEXT_PUBLIC_API_URL: /api/backend
+          VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
+          VITE_API_URL: https://resuelveya.cl/api
+          VITE_CLERK_SIGN_IN_URL: https://resuelveya.cl/sign-in
+          VITE_CLERK_SIGN_UP_URL: https://resuelveya.cl/sign-up
+          VITE_CLERK_AFTER_SIGN_IN_URL: https://resuelveya.cl/dashboard
+          VITE_CLERK_AFTER_SIGN_UP_URL: https://resuelveya.cl/dashboard
+          NODE_ENV: production
         run: npm run build
       
       - name: Create deployment package
@@ -83,9 +86,12 @@ jobs:
             
             # Update environment
             cat > .env.production << 'ENVEOF'
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY }}
-          CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY }}
-          BACKEND_API_URL=https://resuelveya.cl/api
+          VITE_CLERK_PUBLISHABLE_KEY=${{ secrets.CLERK_PUBLISHABLE_KEY }}
+          VITE_API_URL=https://resuelveya.cl/api
+          VITE_CLERK_SIGN_IN_URL=https://resuelveya.cl/sign-in
+          VITE_CLERK_SIGN_UP_URL=https://resuelveya.cl/sign-up
+          VITE_CLERK_AFTER_SIGN_IN_URL=https://resuelveya.cl/dashboard
+          VITE_CLERK_AFTER_SIGN_UP_URL=https://resuelveya.cl/dashboard
           NODE_ENV=production
           PORT=3003
           ENVEOF
@@ -104,7 +110,7 @@ jobs:
           sleep 10
           
           for i in {1..5}; do
-            if curl -f https://resuelveya.cl/cashflow; then
+            if curl -f https://resuelveya.cl/cashflow/; then
               echo "✅ Cashflow app is healthy!"
               exit 0
             fi
