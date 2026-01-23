@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 import svgr from "vite-plugin-svgr";
 
 export default defineConfig({
-  base: '/cashflow', // 👈 ahora configurado para sub-ruta en producción
+  base: '/', // 👈 Ahora en su propio subdominio, no necesita sub-ruta
   resolve: {
     alias: {
       '@': '/src'
