@@ -96,7 +96,9 @@ export default function App() {
 
   if (!user) {
     // Redirect to landing sign-in
-    window.location.href = 'https://resuelveya.cl/sign-in?redirect_url=' + window.location.href;
+    const baseUrl = 'https://resuelveya.cl'
+    const redirectUrl = encodeURIComponent(window.location.origin + window.location.pathname)
+    window.location.href = `${baseUrl}/sign-in?redirect_url=${redirectUrl}`
     return null;
   }
 
