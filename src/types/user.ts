@@ -1,4 +1,4 @@
-// src/types/user.ts - Versión extendida con compatibilidad Clerk
+// src/types/user.ts - Versión extendida con compatibilidad Supabase Auth
 
 export type UserRole = 'admin' | 'manager' | 'user';
 
@@ -22,7 +22,7 @@ export interface User {
   postal_code?: string;
   address?: string;
 
-  // ✅ NUEVOS: Campos adicionales para compatibilidad con Clerk
+  // ✅ NUEVOS: Campos adicionales para compatibilidad con metadatos de Auth
   firstName?: string;
   lastName?: string;
   username?: string;
@@ -78,7 +78,7 @@ export interface UpdateProfileData {
   city?: string;
   postal_code?: string;
   address?: string;
-  // ✅ NUEVOS: Campos para actualizar perfil con Clerk
+  // ✅ NUEVOS: Campos para actualizar perfil con Supabase
   firstName?: string;
   lastName?: string;
   username?: string;

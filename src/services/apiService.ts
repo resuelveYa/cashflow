@@ -26,7 +26,7 @@ export const setTokenGetter = (getter: () => Promise<string | null>) => {
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     try {
-      // ✅ Obtener token fresco desde Clerk
+      // ✅ Obtener token fresco desde Supabase
       if (getTokenFunction) {
         const token = await getTokenFunction();
 
