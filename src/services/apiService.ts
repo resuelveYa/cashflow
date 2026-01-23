@@ -15,10 +15,10 @@ const apiClient = axios.create({
   withCredentials: true,
 });
 
-// ✅ FUNCIÓN PARA OBTENER TOKEN DIRECTAMENTE DESDE CLERK
+// ✅ FUNCIÓN PARA OBTENER TOKEN DIRECTAMENTE DESDE AUTH PROVIDER (SUPABASE)
 let getTokenFunction: (() => Promise<string | null>) | null = null;
 
-export const setClerkTokenGetter = (getter: () => Promise<string | null>) => {
+export const setTokenGetter = (getter: () => Promise<string | null>) => {
   getTokenFunction = getter;
 };
 
@@ -47,7 +47,7 @@ apiClient.interceptors.request.use(
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         } else {
-          console.error('[API] ❌ NO SE PUDO OBTENER TOKEN DE CLERK');
+          console.error('[API] ❌ NO SE PUDO OBTENER TOKEN DE SESIÓN');
         }
       } else {
         console.error('[API] ❌ getTokenFunction NO ESTÁ CONFIGURADA');
@@ -84,9 +84,9 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       console.error('[API] 🚨 401 UNAUTHORIZED - Token inválido o expirado');
 
-      // Redirigir al sign-in de tu app Next.js
-      const redirectUrl = encodeURIComponent(window.location.href);
-      window.location.href = `${ENV.CLERK.SIGN_IN_URL}?redirect_url=${redirectUrl}`;
+      // Redirigir al sign-in del landing
+      const currentUrl = encodeURIComponent(window.location.href);
+      window.location.href = `https://resuelveya.cl/sign-in?redirect_url=${currentUrl}`;
     }
 
     return Promise.reject(error);

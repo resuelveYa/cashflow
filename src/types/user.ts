@@ -10,18 +10,18 @@ export interface User {
   active: boolean;
   created_at: string;
   updated_at: string;
-  
+
   // Campos de perfil (ya existentes)
   avatar?: string;
   position?: string;
   location?: string;
-  
+
   // Campos de dirección (ya existentes)
   country?: string;
   city?: string;
   postal_code?: string;
   address?: string;
-  
+
   // ✅ NUEVOS: Campos adicionales para compatibilidad con Clerk
   firstName?: string;
   lastName?: string;
@@ -218,29 +218,31 @@ export const isValidEmail = (email: string): boolean => {
   return emailRegex.test(email);
 };
 
-// ✅ NUEVO: Helper para mapear usuario de Clerk a User local
-export const mapClerkUserToLocal = (clerkUser: any): User => {
+// ✅ NUEVO: Helper para mapear usuario de Supabase a User local
+export const mapSupabaseUserToLocal = (supabaseUser: any): User => {
+  const metadata = supabaseUser.user_metadata || {};
   return {
-    id: parseInt(clerkUser.id) || 0,
-    email: clerkUser.primaryEmailAddress?.emailAddress || '',
-    name: `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || 
-          clerkUser.username || 
-          'Usuario',
-    firstName: clerkUser.firstName || '',
-    lastName: clerkUser.lastName || '',
-    username: clerkUser.username || clerkUser.primaryEmailAddress?.emailAddress?.split('@')[0] || '',
-    avatar: clerkUser.imageUrl || '',
-    phone: clerkUser.primaryPhoneNumber?.phoneNumber || '',
-    role: (clerkUser.publicMetadata?.role as UserRole) || 'user',
-    company: clerkUser.publicMetadata?.company as string || '',
-    position: clerkUser.publicMetadata?.position as string || '',
-    location: clerkUser.publicMetadata?.location as string || '',
-    country: clerkUser.publicMetadata?.country as string || '',
-    city: clerkUser.publicMetadata?.city as string || '',
-    postal_code: clerkUser.publicMetadata?.postal_code as string || '',
-    address: clerkUser.publicMetadata?.address as string || '',
+    id: parseInt(supabaseUser.id) || 0,
+    email: supabaseUser.email || '',
+    name: metadata.full_name ||
+      `${metadata.first_name || ''} ${metadata.last_name || ''}`.trim() ||
+      supabaseUser.email?.split('@')[0] ||
+      'Usuario',
+    firstName: metadata.first_name || metadata.full_name?.split(' ')[0] || '',
+    lastName: metadata.last_name || metadata.full_name?.split(' ').slice(1).join(' ') || '',
+    username: metadata.username || supabaseUser.email?.split('@')[0] || '',
+    avatar: metadata.avatar_url || '',
+    phone: metadata.phone || '',
+    role: (metadata.role as UserRole) || 'user',
+    company: metadata.company as string || '',
+    position: metadata.position as string || '',
+    location: metadata.location as string || '',
+    country: metadata.country as string || '',
+    city: metadata.city as string || '',
+    postal_code: metadata.postal_code as string || '',
+    address: metadata.address as string || '',
     active: true,
-    created_at: clerkUser.createdAt || new Date().toISOString(),
-    updated_at: clerkUser.updatedAt || new Date().toISOString(),
+    created_at: supabaseUser.created_at || new Date().toISOString(),
+    updated_at: supabaseUser.updated_at || new Date().toISOString(),
   };
 };

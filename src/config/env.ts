@@ -2,13 +2,10 @@
 // Centralized environment configuration
 
 export const ENV = {
-  // Clerk Configuration
-  CLERK: {
-    PUBLISHABLE_KEY: import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
-    SIGN_IN_URL: import.meta.env.VITE_CLERK_SIGN_IN_URL || 'http://localhost:3000/sign-in',
-    SIGN_UP_URL: import.meta.env.VITE_CLERK_SIGN_UP_URL || 'http://localhost:3000/sign-up',
-    AFTER_SIGN_IN_URL: import.meta.env.VITE_CLERK_AFTER_SIGN_IN_URL || 'http://localhost:5173',
-    AFTER_SIGN_UP_URL: import.meta.env.VITE_CLERK_AFTER_SIGN_UP_URL || 'http://localhost:5173',
+  // Supabase Configuration
+  SUPABASE: {
+    URL: import.meta.env.VITE_SUPABASE_URL,
+    ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY,
   },
 
   // API Configuration
@@ -25,7 +22,7 @@ export const ENV = {
 
   // URLs for redirects
   URLS: {
-    LANDING: import.meta.env.VITE_CLERK_SIGN_IN_URL?.replace('/sign-in', '') || 'http://localhost:3000',
-    APP: import.meta.env.VITE_CLERK_AFTER_SIGN_IN_URL || 'http://localhost:5173',
+    LANDING: import.meta.env.VITE_LANDING_URL || 'https://resuelveya.cl',
+    APP: import.meta.env.VITE_APP_URL || window.location.origin,
   }
 };

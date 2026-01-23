@@ -1,8 +1,8 @@
-// App.tsx - Simple Clerk auth without loops
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { useEffect } from 'react';
-import { useAuth, SignIn } from '@clerk/clerk-react';
-import { setClerkTokenGetter } from "./services/apiService";
+// src/App.tsx
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { useEffect, useState } from 'react';
+import { supabase } from "./lib/supabase";
+import { setClerkTokenGetter } from "./services/apiService"; // Keeping name for compatibility or refactor later
 import { AuthProvider } from "./context/AuthContext";
 import { CostCenterProvider } from "./context/CostCenterContext";
 import NotFound from "./pages/OtherPage/NotFound";
@@ -38,23 +38,22 @@ import ExpenseDataList from './pages/DynamicExpense/ExpenseDataList';
 import ExpenseDataForm from './pages/DynamicExpense/ExpenseDataForm';
 import ExpenseDashboard from './pages/DynamicExpense/ExpenseDashboard';
 import CostCentersIndex from './pages/CostCenters/CostCentersIndex';
+import { User } from "@supabase/supabase-js";
 
-// Token provider
-function ClerkTokenProvider() {
-  const { getToken, isLoaded, isSignedIn } = useAuth();
-
+// Token provider (Supabase version)
+function SupabaseTokenProvider({ session }: { session: any }) {
   useEffect(() => {
-    if (isLoaded && isSignedIn) {
+    if (session) {
       setClerkTokenGetter(async () => {
         try {
-          return await getToken();
+          return session.access_token;
         } catch (error) {
-          console.error('[ClerkTokenProvider] Error:', error);
+          console.error('[SupabaseTokenProvider] Error:', error);
           return null;
         }
       });
     }
-  }, [getToken, isLoaded, isSignedIn]);
+  }, [session]);
 
   return null;
 }
@@ -71,29 +70,39 @@ function LoadingScreen() {
   );
 }
 
-// Login page
-function LoginPage() {
-  return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
-      <SignIn routing="path" path="/sign-in" />
-    </div>
-  );
-}
-
 export default function App() {
-  const { isLoaded, isSignedIn } = useAuth();
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  if (!isLoaded) {
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (loading) {
     return <LoadingScreen />;
   }
 
-  if (!isSignedIn) {
-    return <LoginPage />;
+  if (!user) {
+    // Redirect to landing sign-in
+    window.location.href = 'https://resuelveya.cl/sign-in?redirect_url=' + window.location.href;
+    return null;
   }
 
   return (
     <>
-      <ClerkTokenProvider />
+      <SupabaseTokenProvider session={session} />
       <Router>
         <AuthProvider>
           <CostCenterProvider>
@@ -103,6 +112,7 @@ export default function App() {
                 <Route path="/" element={<ConsolidatedHome />} />
                 <Route path="/cash-flow" element={<CashFlow />} />
                 <Route path="/budget-analysis" element={<BudgetAnalyzer />} />
+                {/* ... (rest of routes) */}
                 <Route path="/costos" element={<EgresossIndex />} />
                 <Route path="/costos/index" element={<EgresossIndex />} />
                 <Route path="/costos/cotizaciones" element={<Cotizaciones />} />

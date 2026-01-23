@@ -1,5 +1,5 @@
-import { createContext, useContext, ReactNode, useState } from 'react';
-import { useUser, useClerk } from '@clerk/clerk-react';
+import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import {
   User,
   LoginCredentials,
@@ -7,7 +7,7 @@ import {
   UpdateProfileData,
   UpdateMetaData,
   UpdateAddressData,
-  mapClerkUserToLocal // ✅ Importar el helper
+  mapSupabaseUserToLocal
 } from '../types/user';
 import { ENV } from '../config/env';
 
@@ -17,7 +17,7 @@ interface AuthContextType {
   isLoading: boolean;
   error: string | null;
 
-  // Authentication methods (deprecados pero mantenidos para compatibilidad)
+  // Authentication methods
   login: (email: string, password: string) => Promise<boolean>;
   loginWithCredentials: (credentials: LoginCredentials) => Promise<void>;
   register: (userData: RegisterData) => Promise<void>;
@@ -37,41 +37,69 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const { user: clerkUser, isLoaded: isUserLoaded } = useUser();
-  const { signOut, openSignIn } = useClerk();
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ Usar el helper para mapear el usuario
-  const user: User | null = clerkUser ? mapClerkUserToLocal(clerkUser) : null;
+  useEffect(() => {
+    // Check active sessions and sets the user
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ? mapSupabaseUserToLocal(session.user) : null);
+      setIsLoading(false);
+    });
 
-  // Clear error
-  const clearError = () => {
-    setError(null);
-  };
+    // Listen for changes on auth state (sign in, sign out, etc.)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ? mapSupabaseUserToLocal(session.user) : null);
+      setIsLoading(false);
+    });
 
-  // Login - redirige a Clerk SignIn
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const clearError = () => setError(null);
+
   const login = async (email: string, password: string): Promise<boolean> => {
-    console.warn('login() está deprecado con Clerk. Usa el flujo de Clerk.');
-    openSignIn({ redirectUrl: ENV.URLS.APP });
-    return false;
+    try {
+      setError(null);
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      return true;
+    } catch (err: any) {
+      setError(err.message);
+      return false;
+    }
   };
 
-  // Login with credentials - redirige a Clerk SignIn
   const loginWithCredentials = async (credentials: LoginCredentials): Promise<void> => {
-    console.warn('loginWithCredentials() está deprecado con Clerk. Usa el flujo de Clerk.');
-    openSignIn({ redirectUrl: ENV.URLS.APP });
+    const success = await login(credentials.email, credentials.password);
+    if (!success) throw new Error(error || 'Login failed');
   };
 
-  // Register - redirige a Clerk SignUp
   const register = async (userData: RegisterData): Promise<void> => {
-    console.warn('register() está deprecado con Clerk. Usa el flujo de Clerk.');
-    window.location.href = ENV.CLERK.SIGN_UP_URL;
+    try {
+      setError(null);
+      const { error } = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.password,
+        options: {
+          data: {
+            full_name: userData.name,
+            first_name: userData.firstName,
+            last_name: userData.lastName,
+          }
+        }
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    }
   };
 
-  // Logout
   const logout = async (): Promise<void> => {
     try {
-      await signOut();
+      await supabase.auth.signOut();
       window.location.href = ENV.URLS.LANDING;
     } catch (err) {
       console.error('Logout error:', err);
@@ -79,143 +107,87 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Profile management - usar metadata de Clerk
   const updateProfile = async (data: UpdateProfileData): Promise<void> => {
-    setError(null);
     try {
-      if (!clerkUser) {
-        throw new Error('No user logged in');
-      }
-
-      // Actualizar usando la API de Clerk
-      await clerkUser.update({
-        firstName: data.firstName,
-        lastName: data.lastName,
-        username: data.username,
+      setError(null);
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          full_name: data.name,
+          position: data.position,
+          location: data.location,
+          address: data.address,
+        }
       });
-
-      // Actualizar metadata pública si hay campos adicionales
-      if (data.position || data.location || data.company || data.phone) {
-        await clerkUser.update({
-          unsafeMetadata: {
-            ...clerkUser.unsafeMetadata,
-            position: data.position,
-            location: data.location,
-            company: data.company,
-            phone: data.phone,
-          }
-        });
-      }
+      if (error) throw error;
+      await refreshUser();
     } catch (err: any) {
-      console.error('Update profile error:', err);
-      const errorMessage = 'Error al actualizar perfil';
-      setError(errorMessage);
+      setError(err.message);
       throw err;
     }
   };
 
   const updateMeta = async (data: UpdateMetaData): Promise<void> => {
-    setError(null);
     try {
-      if (!clerkUser) {
-        throw new Error('No user logged in');
-      }
-
-      // Actualizar campos básicos de Clerk
-      if (data.firstName || data.lastName || data.username) {
-        await clerkUser.update({
-          firstName: data.firstName,
-          lastName: data.lastName,
-          username: data.username,
-        });
-      }
-
-      // Actualizar metadata pública
-      await clerkUser.update({
-        unsafeMetadata: {
-          ...clerkUser.unsafeMetadata,
+      setError(null);
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          full_name: data.name,
           position: data.position,
           location: data.location,
-          company: data.company,
-          phone: data.phone,
         }
       });
+      if (error) throw error;
+      await refreshUser();
     } catch (err: any) {
-      console.error('Update meta error:', err);
-      const errorMessage = 'Error al actualizar información del perfil';
-      setError(errorMessage);
+      setError(err.message);
       throw err;
     }
   };
 
   const updateAddress = async (data: UpdateAddressData): Promise<void> => {
-    setError(null);
     try {
-      if (!clerkUser) {
-        throw new Error('No user logged in');
-      }
-
-      await clerkUser.update({
-        unsafeMetadata: {
-          ...clerkUser.unsafeMetadata,
+      setError(null);
+      const { error } = await supabase.auth.updateUser({
+        data: {
           address: data.address,
           country: data.country,
           city: data.city,
           postal_code: data.postal_code,
         }
       });
+      if (error) throw error;
+      await refreshUser();
     } catch (err: any) {
-      console.error('Update address error:', err);
-      const errorMessage = 'Error al actualizar dirección';
-      setError(errorMessage);
+      setError(err.message);
       throw err;
     }
   };
 
   const uploadAvatar = async (file: File): Promise<void> => {
-    setError(null);
-    try {
-      if (!clerkUser) {
-        throw new Error('No user logged in');
-      }
-
-      await clerkUser.setProfileImage({ file });
-    } catch (err: any) {
-      console.error('Upload avatar error:', err);
-      const errorMessage = 'Error al subir avatar';
-      setError(errorMessage);
-      throw err;
-    }
+    // This would normally upload to Supabase Storage, then update metadata
+    // For now, let's keep it simple as a reminder that this needs backend storage
+    console.warn('uploadAvatar needs Supabase Storage configuration');
   };
 
   const refreshUser = async (): Promise<void> => {
-    try {
-      await clerkUser?.reload();
-    } catch (err) {
-      console.error('Error refreshing user:', err);
-    }
+    const { data: { user } } = await supabase.auth.getUser();
+    setUser(user ? mapSupabaseUserToLocal(user) : null);
   };
 
   const value: AuthContextType = {
     user,
-    isAuthenticated: !!clerkUser && isUserLoaded,
-    isLoading: !isUserLoaded,
+    isAuthenticated: !!user,
+    isLoading,
     error,
-
-    // Authentication methods
     login,
     loginWithCredentials,
     register,
     logout,
-
-    // Profile management
     updateProfile,
     updateMeta,
     updateAddress,
     uploadAvatar,
     refreshUser,
-
-    // Utility methods
     clearError,
   };
 

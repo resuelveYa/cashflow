@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useUser, useClerk } from '@clerk/clerk-react';
+import { useAuth } from "../../context/AuthContext";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { useNavigate } from "react-router";
@@ -7,8 +7,7 @@ import { ENV } from '../../config/env';
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, isLoaded } = useUser();
-  const { signOut } = useClerk();
+  const { user, isLoading, logout } = useAuth();
   const navigate = useNavigate();
 
   function toggleDropdown() {
@@ -22,17 +21,8 @@ export default function UserDropdown() {
   async function handleLogout() {
     try {
       console.log('[UserDropdown] Cerrando sesión...');
-
-      // Limpiar sessionStorage
-      sessionStorage.removeItem('clerk_token');
-
-      // Cerrar sesión en Clerk
-      await signOut();
-
+      await logout();
       console.log('[UserDropdown] ✅ Sesión cerrada');
-
-      // Redirigir al landing
-      window.location.href = ENV.URLS.LANDING;
     } catch (error) {
       console.error('[UserDropdown] ❌ Error al cerrar sesión:', error);
     } finally {
@@ -40,7 +30,7 @@ export default function UserDropdown() {
     }
   }
 
-  if (!isLoaded) {
+  if (isLoading) {
     return (
       <div className="flex items-center text-gray-700">
         <div className="animate-pulse flex items-center">
@@ -58,15 +48,15 @@ export default function UserDropdown() {
         className="flex items-center text-gray-700 dropdown-toggle dark:text-gray-400"
       >
         <span className="mr-3 overflow-hidden rounded-full h-11 w-11">
-          {user?.imageUrl ? (
-            <img src={user.imageUrl} alt={user.fullName || 'User'} />
+          {user?.avatar ? (
+            <img src={user.avatar} alt={user.name || 'User'} />
           ) : (
-            <img src="/images/user/user-33.jpg" alt="User" />
+            <img src="/images/user/user-01.jpg" alt="User" />
           )}
         </span>
 
         <span className="block mr-1 font-medium text-theme-sm">
-          {user?.fullName || user?.firstName || "Usuario"}
+          {user?.name || "Usuario"}
         </span>
         <svg
           className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
@@ -94,10 +84,10 @@ export default function UserDropdown() {
       >
         <div>
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            {user?.fullName || user?.firstName || "Usuario"}
+            {user?.name || "Usuario"}
           </span>
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-            {user?.primaryEmailAddress?.emailAddress || "user@example.com"}
+            {user?.email || "user@example.com"}
           </span>
         </div>
 

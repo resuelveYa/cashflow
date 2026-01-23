@@ -1,7 +1,7 @@
 // src/context/TenantContext.tsx
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { getCurrentOrganization, getUserOrganizations, switchOrganization, type Organization, type OrganizationMembership } from '../services/organizationService';
-import { useAuth } from '@clerk/clerk-react';
+import { useAuth } from './AuthContext';
 
 // Keep the types the same so components using them don't break
 interface TenantTheme {
@@ -53,18 +53,18 @@ const fallbackTenant: TenantConfig = {
 // Create the context
 const TenantContext = createContext<TenantContextType>({
   currentTenant: fallbackTenant,
-  setCurrentTenant: () => {},
+  setCurrentTenant: () => { },
   availableTenants: [],
   isLoading: true,
-  refreshOrganization: async () => {},
-  switchToOrganization: async () => {},
+  refreshOrganization: async () => { },
+  switchToOrganization: async () => { },
 });
 
 export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentTenant, setCurrentTenant] = useState<TenantConfig>(fallbackTenant);
   const [availableTenants, setAvailableTenants] = useState<TenantConfig[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { isSignedIn, isLoaded } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
 
   // Función para convertir Organization a TenantConfig
   const organizationToTenant = (org: Organization): TenantConfig => ({
@@ -138,13 +138,13 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Cargar datos al montar si el usuario está autenticado
   useEffect(() => {
-    if (isLoaded && isSignedIn) {
+    if (!isAuthLoading && isAuthenticated) {
       loadCurrentOrganization();
       loadAvailableOrganizations();
-    } else if (isLoaded && !isSignedIn) {
+    } else if (!isAuthLoading && !isAuthenticated) {
       setIsLoading(false);
     }
-  }, [isLoaded, isSignedIn]);
+  }, [isAuthLoading, isAuthenticated]);
 
   // Aplicar tema inicial
   useEffect(() => {
