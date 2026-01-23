@@ -2,7 +2,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useEffect, useState } from 'react';
 import { supabase } from "./lib/supabase";
-import { setClerkTokenGetter } from "./services/apiService"; // Keeping name for compatibility or refactor later
+import { setTokenGetter } from "./services/apiService"; // Updated name
 import { AuthProvider } from "./context/AuthContext";
 import { CostCenterProvider } from "./context/CostCenterContext";
 import NotFound from "./pages/OtherPage/NotFound";
@@ -44,7 +44,7 @@ import { User } from "@supabase/supabase-js";
 function SupabaseTokenProvider({ session }: { session: any }) {
   useEffect(() => {
     if (session) {
-      setClerkTokenGetter(async () => {
+      setTokenGetter(async () => {
         try {
           return session.access_token;
         } catch (error) {
