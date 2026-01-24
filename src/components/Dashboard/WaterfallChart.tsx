@@ -11,7 +11,10 @@ interface WaterfallChartProps {
 }
 
 export default function WaterfallChart({ periods, balanceData, title = 'Balance por Período' }: WaterfallChartProps) {
-  const [chartOptions, setChartOptions] = useState<ApexOptions>({});
+  const [chartOptions, setChartOptions] = useState<ApexOptions>({
+    chart: { id: 'waterfall-chart', type: 'bar' },
+    xaxis: { categories: [] }
+  });
   const [chartSeries, setChartSeries] = useState<any[]>([]);
 
   useEffect(() => {
@@ -40,6 +43,7 @@ export default function WaterfallChart({ periods, balanceData, title = 'Balance 
 
     const options: ApexOptions = {
       chart: {
+        id: 'waterfall-chart',
         type: 'bar',
         height: 400,
         toolbar: {
@@ -184,11 +188,12 @@ export default function WaterfallChart({ periods, balanceData, title = 'Balance 
     }]);
   }, [periods, balanceData, title]);
 
-  if (balanceData.length === 0) {
+  if (balanceData.length === 0 || !chartSeries.length || !chartSeries[0]?.data?.length) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-        <div className="flex items-center justify-center h-64 text-gray-500 dark:text-gray-400">
-          No hay datos disponibles para mostrar el gráfico
+        <div className="flex items-center justify-center h-64 text-gray-500 dark:text-gray-400 text-center flex-col gap-2">
+          <p>No hay datos suficientes para mostrar el gráfico</p>
+          <p className="text-xs text-gray-400">Verifica el rango de fechas seleccionado</p>
         </div>
       </div>
     );
