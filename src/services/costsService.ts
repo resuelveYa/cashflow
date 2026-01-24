@@ -174,7 +174,7 @@ export const costsApiService = {
   async getCostsData(filters: CostsFilters): Promise<CostsData> {
     try {
       const params = new URLSearchParams();
-      
+
       if (filters.periodType) params.append('period_type', filters.periodType);
       if (filters.year) params.append('year', filters.year);
       if (filters.projectId && filters.projectId !== 'all') {
@@ -242,11 +242,11 @@ export const costsApiService = {
   async getCostsByPeriod(filters: CostsFilters): Promise<CostsByPeriod[]> {
     try {
       const params = new URLSearchParams();
-      
+
       Object.entries(filters).forEach(([key, value]) => {
         if (value && value !== 'all') {
-          const backendKey = key === 'costCenterId' ? 'cost_center_id' : 
-                           key === 'categoryId' ? 'category_id' : key;
+          const backendKey = key === 'costCenterId' ? 'cost_center_id' :
+            key === 'categoryId' ? 'category_id' : key;
           params.append(backendKey, value.toString());
         }
       });
@@ -269,16 +269,17 @@ export const costsApiService = {
       }
 
       const groupedData: Record<string, Record<string, number>> = {};
-      
+
       response.data.forEach(item => {
-        const category = item.category_name || 'Sin Categoría';
+        // Backend puede devolver type_name o category_name dependiendo de la versión
+        const category = (item as any).type_name || item.category_name || 'Sin Categoría';
         const periodKey = item.period_key;
         const amount = parseFloat(item.total_amount.toString()) || 0;
 
         if (!groupedData[category]) {
           groupedData[category] = {};
         }
-        
+
         groupedData[category][periodKey] = amount;
       });
 
@@ -297,10 +298,10 @@ export const costsApiService = {
   },
 
   async getFilterOptions(): Promise<{
-    projects: Array<{value: string, label: string}>;
-    costCenters: Array<{value: string, label: string}>;
-    categories: Array<{value: string, label: string}>;
-    statuses: Array<{value: string, label: string}>;
+    projects: Array<{ value: string, label: string }>;
+    costCenters: Array<{ value: string, label: string }>;
+    categories: Array<{ value: string, label: string }>;
+    statuses: Array<{ value: string, label: string }>;
   }> {
     try {
       const response = await api.get<{
