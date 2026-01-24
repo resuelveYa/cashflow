@@ -1,14 +1,31 @@
 // src/services/financialAggregationService.ts
 
-// Módulos contables eliminados
+// Módulos contables eliminados - Sistema genérico SaaS
 // import { getRemuneracionesByPeriod } from './CC/remuneracionesService';
 // import { previsionalesService } from './CC/previsionalesService';
 // import { getFixedCosts } from './CC/fixedCostsService';
 // import { getItemsByAccountCategory, ItemFilters, PurchaseOrderItem } from './CC/ordenesCompraItemService';
+// import { factoringService } from './factoringService';
+// import { accountCategoriesService, AccountCategoryType, AccountCategory } from './accountCategoriesService';
 
-import { factoringService } from './factoringService';
-import { accountCategoriesService, AccountCategoryType, AccountCategory } from './accountCategoriesService';
 import { FinancialPeriod } from '../components/tables/FinancialTable';
+
+// Tipos locales para compatibilidad
+enum AccountCategoryType {
+  MANO_OBRA = 'mano_obra',
+  MAQUINARIA = 'maquinaria',
+  MATERIALES = 'materiales',
+  COMBUSTIBLES = 'combustibles',
+  GASTOS_GENERALES = 'gastos_generales'
+}
+
+interface AccountCategory {
+  id: number;
+  code: string;
+  name: string;
+  type: AccountCategoryType;
+  group_name?: string;
+}
 
 export interface FinancialDataByPeriod {
   remuneraciones: Record<string, number>;
@@ -134,48 +151,11 @@ export class FinancialAggregationService {
 
   /**
    * Get factoring data aggregated by period
+   * LEGACY: Módulo removido - sistema genérico SaaS
    */
   static async getFactoringData(periods: FinancialPeriod[], year: number, costCenterId?: number): Promise<Record<string, number>> {
-    const factoringAmounts: Record<string, number> = this.initializeEmptyPeriods(periods);
-
-    try {
-      // Load all factorings for the year and filter in frontend
-      const allFactorings = await factoringService.getFactorings();
-
-      // Filter and group factorings by period
-      allFactorings.forEach(factoring => {
-        if (factoring.date_factoring) {
-          // Filter by cost center if specified
-          if (costCenterId && factoring.cost_center_id !== costCenterId) {
-            return;
-          }
-
-          const factoringDate = new Date(factoring.date_factoring);
-          const factoringYear = factoringDate.getFullYear();
-
-          // Only process if it's from the selected year
-          if (factoringYear === year) {
-            const periodId = this.getPeriodIdFromDate(factoringDate, periods);
-
-            if (periodId && factoringAmounts.hasOwnProperty(periodId)) {
-              // Ensure we're working with numbers, not strings
-              const mount = typeof factoring.mount === 'string' ? parseFloat(factoring.mount) : Number(factoring.mount);
-              const interestRate = typeof factoring.interest_rate === 'string' ? parseFloat(factoring.interest_rate) : Number(factoring.interest_rate);
-
-              // Calculate factoring cost: mount * (interest_rate / 100)
-              const factoringCost = (isNaN(mount) ? 0 : mount) * (isNaN(interestRate) ? 0 : interestRate) / 100;
-
-              factoringAmounts[periodId] += factoringCost;
-            }
-          }
-        }
-      });
-
-      return factoringAmounts;
-    } catch (error) {
-      console.error('Error loading factoring data:', error);
-      return this.initializeEmptyPeriods(periods);
-    }
+    // ELIMINADO - Factoring es un módulo legacy específico del cliente SAER
+    return this.initializeEmptyPeriods(periods);
   }
 
   /**
@@ -195,56 +175,13 @@ export class FinancialAggregationService {
   }
 
   /**
-   * Get account categories data aggregated by period using purchase order items
+   * Get account categories data aggregated by period
+   * LEGACY: Módulo removido - sistema genérico SaaS
    */
   static async getAccountCategoriesData(periods: FinancialPeriod[], year: number, costCenterId?: number): Promise<CategoryFinancialData> {
-    console.log('🚀 Starting getAccountCategoriesData with:', { periods: periods.length, year, costCenterId });
-    const categoryData: CategoryFinancialData = {};
-
-    try {
-      // Get all active account categories
-      console.log('🔄 Loading account categories...');
-      const accountCategories = await accountCategoriesService.getActiveCategories();
-      console.log('📋 Account categories loaded:', accountCategories);
-
-      if (!accountCategories || accountCategories.length === 0) {
-        console.log('⚠️ No active account categories found');
-        return categoryData;
-      }
-
-      console.log(`✅ Loading data for ${accountCategories.length} account categories`);
-
-      // Process each account category
-      for (const category of accountCategories) {
-        try {
-          const categoryKey = this.generateCategoryKey(category);
-          const categoryAmounts = this.initializeEmptyPeriods(periods);
-
-          // Build filters for the current year
-          const filters: ItemFilters = {
-            date_from: `${year}-01-01`,
-            date_to: `${year}-12-31`
-          };
-
-          // ELIMINADO - Purchase order items module removed
-          // Los datos de órdenes de compra ya no están disponibles
-          console.log(`Category ${category.name}: purchase order items module removed`);
-
-          categoryData[categoryKey] = categoryAmounts;
-
-          console.log(`Loaded data for category ${category.name}: ${Object.values(categoryAmounts).reduce((sum, val) => sum + val, 0)}`);
-        } catch (error) {
-          console.error(`Error loading data for category ${category.name} (ID: ${category.id}):`, error);
-          // Initialize empty data for this category on error
-          categoryData[this.generateCategoryKey(category)] = this.initializeEmptyPeriods(periods);
-        }
-      }
-
-      return categoryData;
-    } catch (error) {
-      console.error('Error loading account categories data:', error);
-      return categoryData;
-    }
+    // ELIMINADO - Account categories es un módulo legacy específico del cliente SAER
+    console.log('ℹ️ Account categories module disabled (legacy feature)');
+    return {};
   }
 
   /**
@@ -312,15 +249,11 @@ export class FinancialAggregationService {
 
   /**
    * Get categories grouped by type for better organization
+   * LEGACY: Módulo removido - sistema genérico SaaS
    */
   static async getCategoriesByType(): Promise<Record<AccountCategoryType, AccountCategory[]>> {
-    try {
-      const grouped = await accountCategoriesService.getGroupedByType();
-      return grouped as Record<AccountCategoryType, AccountCategory[]>;
-    } catch (error) {
-      console.error('Error loading categories by type:', error);
-      return {} as Record<AccountCategoryType, AccountCategory[]>;
-    }
+    // ELIMINADO - Account categories es un módulo legacy
+    return {} as Record<AccountCategoryType, AccountCategory[]>;
   }
 
   /**
@@ -417,17 +350,12 @@ export class FinancialAggregationService {
   static async convertToFinancialCategories(
     financialData: FinancialDataByPeriod,
     accountCategories?: AccountCategory[]
-  ): Promise<Array<{category: string, amounts: Record<string, number>, path: string}>> {
-    const categories: Array<{category: string, amounts: Record<string, number>, path: string}> = [];
+  ): Promise<Array<{ category: string, amounts: Record<string, number>, path: string }>> {
+    const categories: Array<{ category: string, amounts: Record<string, number>, path: string }> = [];
 
-    // Get account categories if not provided
+    // Usar categorías proporcionadas o array vacío (legacy module disabled)
     if (!accountCategories) {
-      try {
-        accountCategories = await accountCategoriesService.getActiveCategories();
-      } catch (error) {
-        console.error('Error loading account categories for conversion:', error);
-        accountCategories = [];
-      }
+      accountCategories = [];
     }
 
     // Process dynamic account categories
