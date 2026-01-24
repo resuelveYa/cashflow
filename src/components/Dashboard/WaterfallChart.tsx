@@ -80,13 +80,17 @@ export default function WaterfallChart({ periods, balanceData, title = 'Balance 
       dataLabels: {
         enabled: true,
         formatter: function (val: any) {
+          if (val === undefined || val === null) return '$0';
+          const num = typeof val === 'number' ? val : parseFloat(String(val));
+          if (isNaN(num)) return '$0';
+
           return new Intl.NumberFormat('es-CL', {
             style: 'currency',
             currency: 'CLP',
             minimumFractionDigits: 0,
             notation: 'compact',
             compactDisplay: 'short'
-          }).format(val);
+          }).format(num);
         },
         offsetY: -25,
         style: {
@@ -116,14 +120,18 @@ export default function WaterfallChart({ periods, balanceData, title = 'Balance 
           text: 'Balance'
         },
         labels: {
-          formatter: function (val: number) {
+          formatter: function (val: any) {
+            if (val === undefined || val === null) return '$0';
+            const num = typeof val === 'number' ? val : parseFloat(String(val));
+            if (isNaN(num)) return '$0';
+
             return new Intl.NumberFormat('es-CL', {
               style: 'currency',
               currency: 'CLP',
               minimumFractionDigits: 0,
               notation: 'compact',
               compactDisplay: 'short'
-            }).format(val);
+            }).format(num);
           }
         }
       },

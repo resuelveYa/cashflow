@@ -18,8 +18,12 @@ const ComparativeLineChart: React.FC<ComparativeLineChartProps> = ({
     // Combine and sort both datasets by period
     const allPeriods = new Set<string>();
 
-    incomeData.forEach(item => allPeriods.add(item.period_label));
-    expenseData.forEach(item => allPeriods.add(item.period_label));
+    incomeData.forEach(item => {
+      if (item && item.period_label) allPeriods.add(item.period_label);
+    });
+    expenseData.forEach(item => {
+      if (item && item.period_label) allPeriods.add(item.period_label);
+    });
 
     const sortedPeriods = Array.from(allPeriods).sort();
 
@@ -101,12 +105,16 @@ const ComparativeLineChart: React.FC<ComparativeLineChartProps> = ({
     yaxis: {
       labels: {
         formatter: (value) => {
-          if (value >= 1000000) {
-            return `$${(value / 1000000).toFixed(1)}M`;
-          } else if (value >= 1000) {
-            return `$${(value / 1000).toFixed(0)}k`;
+          if (value === undefined || value === null) return '$0';
+          const num = typeof value === 'number' ? value : parseFloat(String(value));
+          if (isNaN(num)) return '$0';
+
+          if (Math.abs(num) >= 1000000) {
+            return `$${(num / 1000000).toFixed(1)}M`;
+          } else if (Math.abs(num) >= 1000) {
+            return `$${(num / 1000).toFixed(0)}k`;
           }
-          return `$${value.toFixed(0)}`;
+          return `$${num.toFixed(0)}`;
         },
         style: {
           fontSize: '12px'
@@ -208,14 +216,18 @@ const ComparativeLineChart: React.FC<ComparativeLineChartProps> = ({
         }
       },
       labels: {
-        formatter: (val: number) => {
+        formatter: (val: any) => {
+          if (val === undefined || val === null) return '$0';
+          const num = typeof val === 'number' ? val : parseFloat(String(val));
+          if (isNaN(num)) return '$0';
+
           return new Intl.NumberFormat('es-CL', {
             style: 'currency',
             currency: 'CLP',
             minimumFractionDigits: 0,
             notation: 'compact',
             compactDisplay: 'short'
-          }).format(val);
+          }).format(num);
         },
         style: {
           fontSize: '12px'

@@ -65,14 +65,17 @@ const TopTypesBarChart: React.FC<TopTypesBarChartProps> = ({
     colors: ['#10b981'],
     dataLabels: {
       enabled: true,
-      formatter: (value: number | string | number[]) => {
+      formatter: (value: any) => {
+        if (value === undefined || value === null) return '$0';
         const num = typeof value === 'number' ? value : parseFloat(String(value));
-        if (num >= 1000000) {
+        if (isNaN(num)) return '$0';
+
+        if (Math.abs(num) >= 1000000) {
           return `$${(num / 1000000).toFixed(1)}M`;
-        } else if (num >= 1000) {
+        } else if (Math.abs(num) >= 1000) {
           return `$${(num / 1000).toFixed(0)}k`;
         }
-        return `$${num}`;
+        return `$${num.toFixed(0)}`;
       },
       offsetX: 5,
       style: {
@@ -84,13 +87,16 @@ const TopTypesBarChart: React.FC<TopTypesBarChartProps> = ({
       categories: chartData.income.categories,
       labels: {
         formatter: (value) => {
-          const num = parseFloat(value);
-          if (num >= 1000000) {
+          if (value === undefined || value === null) return '$0';
+          const num = typeof value === 'number' ? value : parseFloat(String(value));
+          if (isNaN(num)) return '$0';
+
+          if (Math.abs(num) >= 1000000) {
             return `$${(num / 1000000).toFixed(1)}M`;
-          } else if (num >= 1000) {
+          } else if (Math.abs(num) >= 1000) {
             return `$${(num / 1000).toFixed(0)}k`;
           }
-          return `$${num}`;
+          return `$${num.toFixed(0)}`;
         },
         style: {
           fontSize: '11px'

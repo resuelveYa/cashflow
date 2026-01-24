@@ -68,7 +68,10 @@ export default function CashFlowChart({ data, period, color }: CashFlowChartProp
     },
     yaxis: {
       labels: {
-        formatter: (val: number) => formatCurrency(val),
+        formatter: (val: any) => {
+          const num = typeof val === 'number' ? val : parseFloat(String(val));
+          return formatCurrency(isNaN(num) ? 0 : num);
+        },
         style: {
           colors: '#6B7280'
         }
