@@ -43,19 +43,19 @@ import ExpenseDashboard from './pages/DynamicExpense/ExpenseDashboard';
 import CostCentersIndex from './pages/CostCenters/CostCentersIndex';
 import { User } from "@supabase/supabase-js";
 
-// Token provider (Supabase version)
-function SupabaseTokenProvider({ session }: { session: any }) {
+// Token reference that gets updated when session changes
+// This avoids calling getSession() on every API request
+let currentAccessToken: string | null = null;
+
+// Initialize token getter once - it reads from the mutable reference
+setTokenGetter(async () => currentAccessToken);
+
+// Component that keeps the token reference updated
+function SupabaseTokenProvider({ session }: { session: { access_token: string } | null }) {
   useEffect(() => {
-    if (session) {
-      setTokenGetter(async () => {
-        try {
-          return session.access_token;
-        } catch (error) {
-          console.error('[SupabaseTokenProvider] Error:', error);
-          return null;
-        }
-      });
-    }
+    // Update the token reference whenever session changes
+    currentAccessToken = session?.access_token || null;
+    console.log('[SupabaseTokenProvider] Token updated:', currentAccessToken ? 'present' : 'null');
   }, [session]);
 
   return null;
