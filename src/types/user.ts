@@ -3,7 +3,7 @@
 export type UserRole = 'admin' | 'manager' | 'user';
 
 export interface User {
-  id: number;
+  id: string;
   name: string;
   email: string;
   role: UserRole;
@@ -170,7 +170,7 @@ export interface UserStats {
     new_last_month: number;
   };
   recentUsers: Array<{
-    id: number;
+    id: string;
     name: string;
     email: string;
     role: UserRole;
@@ -222,7 +222,7 @@ export const isValidEmail = (email: string): boolean => {
 export const mapSupabaseUserToLocal = (supabaseUser: any): User => {
   const metadata = supabaseUser.user_metadata || {};
   return {
-    id: parseInt(supabaseUser.id) || 0,
+    id: supabaseUser.id || '0',
     email: supabaseUser.email || '',
     name: metadata.full_name ||
       `${metadata.first_name || ''} ${metadata.last_name || ''}`.trim() ||
