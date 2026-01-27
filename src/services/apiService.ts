@@ -82,11 +82,20 @@ apiClient.interceptors.response.use(
     });
 
     if (error.response?.status === 401) {
-      console.error('[API] 🚨 401 UNAUTHORIZED - Token inválido o expirado');
+      console.warn('[API] 🚨 401 detectado, verificando sesión...');
 
-      // Redirigir al sign-in del landing
-      const currentUrl = encodeURIComponent(window.location.href);
-      window.location.href = `https://resuelveya.cl/sign-in?redirect_url=${currentUrl}`;
+      if (typeof window !== 'undefined' && getTokenFunction) {
+        // Verificar si el token realmente se perdió o es inválido
+        getTokenFunction().then(token => {
+          if (!token) {
+            console.error('[API] 🚫 Sesión perdida o expirada de verdad. Redirigiendo...');
+            const currentUrl = encodeURIComponent(window.location.href);
+            window.location.href = `https://resuelveya.cl/sign-in?redirect_url=${currentUrl}`;
+          } else {
+            console.warn('[API] 🤔 401 recibido pero hay token activo. Posible error de permisos o expiración en backend.');
+          }
+        });
+      }
     }
 
     return Promise.reject(error);
