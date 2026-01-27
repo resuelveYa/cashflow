@@ -10,6 +10,7 @@ import {
   mapSupabaseUserToLocal
 } from '../types/user';
 import { ENV } from '../config/env';
+import { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
   user: User | null;
@@ -43,13 +44,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     // Check active sessions and sets the user
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }: { data: { session: Session | null } }) => {
       setUser(session?.user ? mapSupabaseUserToLocal(session.user) : null);
       setIsLoading(false);
     });
 
     // Listen for changes on auth state (sign in, sign out, etc.)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
       setUser(session?.user ? mapSupabaseUserToLocal(session.user) : null);
       setIsLoading(false);
     });

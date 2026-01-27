@@ -42,7 +42,7 @@ import ExpenseDataList from './pages/DynamicExpense/ExpenseDataList';
 import ExpenseDataForm from './pages/DynamicExpense/ExpenseDataForm';
 import ExpenseDashboard from './pages/DynamicExpense/ExpenseDashboard';
 import CostCentersIndex from './pages/CostCenters/CostCentersIndex';
-import { User } from "@supabase/supabase-js";
+import { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 // Token reference that gets updated when session changes
 // This avoids calling getSession() on every API request
@@ -76,17 +76,17 @@ function LoadingScreen() {
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }: { data: { session: Session | null } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
       setSession(session);
       setUser(session?.user ?? null);
     });
