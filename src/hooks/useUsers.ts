@@ -1,12 +1,12 @@
 // src/hooks/useUsers.ts
 import { useState, useEffect, useCallback } from 'react';
-import { 
-  User, 
-  CreateUserData, 
-  UpdateUserData, 
-  UserFilters, 
+import {
+  User,
+  CreateUserData,
+  UpdateUserData,
+  UserFilters,
   UserStats,
-  PaginatedResponse 
+  PaginatedResponse
 } from '../types/user';
 import { userService } from '../services/userService';
 
@@ -22,13 +22,13 @@ interface UseUsersReturn extends UseUsersState {
   // User CRUD operations
   fetchUsers: (filters?: UserFilters) => Promise<void>;
   createUser: (userData: CreateUserData) => Promise<User>;
-  updateUser: (id: number, userData: UpdateUserData) => Promise<User>;
-  deleteUser: (id: number) => Promise<void>;
-  toggleUserStatus: (id: number, active: boolean) => Promise<User>;
-  
+  updateUser: (id: string, userData: UpdateUserData) => Promise<User>;
+  deleteUser: (id: string) => Promise<void>;
+  toggleUserStatus: (id: string, active: boolean) => Promise<User>;
+
   // Statistics
   fetchStats: () => Promise<void>;
-  
+
   // Utility functions
   clearError: () => void;
   refreshUsers: () => Promise<void>;
@@ -62,12 +62,12 @@ export function useUsers(initialFilters?: UserFilters): UseUsersReturn {
     try {
       setLoading(true);
       setError(null);
-      
+
       const filtersToUse = filters || currentFilters;
       setCurrentFilters(filtersToUse);
-      
+
       const response = await userService.getUsers(filtersToUse);
-      
+
       setState(prev => ({
         ...prev,
         users: response.data,
@@ -86,10 +86,10 @@ export function useUsers(initialFilters?: UserFilters): UseUsersReturn {
     try {
       setError(null);
       const newUser = await userService.createUser(userData);
-      
+
       // Refresh users list
       await fetchUsers();
-      
+
       return newUser;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Error al crear usuario';
@@ -99,19 +99,19 @@ export function useUsers(initialFilters?: UserFilters): UseUsersReturn {
   }, [fetchUsers]);
 
   // Update user
-  const updateUser = useCallback(async (id: number, userData: UpdateUserData): Promise<User> => {
+  const updateUser = useCallback(async (id: string, userData: UpdateUserData): Promise<User> => {
     try {
       setError(null);
       const updatedUser = await userService.updateUser(id, userData);
-      
+
       // Update user in local state
       setState(prev => ({
         ...prev,
-        users: prev.users.map(user => 
+        users: prev.users.map(user =>
           user.id === id ? updatedUser : user
         ),
       }));
-      
+
       return updatedUser;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Error al actualizar usuario';
@@ -121,11 +121,11 @@ export function useUsers(initialFilters?: UserFilters): UseUsersReturn {
   }, []);
 
   // Delete user
-  const deleteUser = useCallback(async (id: number): Promise<void> => {
+  const deleteUser = useCallback(async (id: string): Promise<void> => {
     try {
       setError(null);
       await userService.deleteUser(id);
-      
+
       // Remove user from local state
       setState(prev => ({
         ...prev,
@@ -139,19 +139,19 @@ export function useUsers(initialFilters?: UserFilters): UseUsersReturn {
   }, []);
 
   // Toggle user status
-  const toggleUserStatus = useCallback(async (id: number, active: boolean): Promise<User> => {
+  const toggleUserStatus = useCallback(async (id: string, active: boolean): Promise<User> => {
     try {
       setError(null);
       const updatedUser = await userService.toggleUserStatus(id, active);
-      
+
       // Update user in local state
       setState(prev => ({
         ...prev,
-        users: prev.users.map(user => 
+        users: prev.users.map(user =>
           user.id === id ? updatedUser : user
         ),
       }));
-      
+
       return updatedUser;
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Error al cambiar estado del usuario';
@@ -189,7 +189,7 @@ export function useUsers(initialFilters?: UserFilters): UseUsersReturn {
     pagination: state.pagination,
     loading: state.loading,
     error: state.error,
-    
+
     // Actions
     fetchUsers,
     createUser,

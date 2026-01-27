@@ -1,13 +1,13 @@
 // src/services/userService.ts
 import api from './apiService';
-import { 
-  User, 
-  CreateUserData, 
-  UpdateUserData, 
-  ApiResponse, 
-  PaginatedResponse, 
-  UserFilters, 
-  UserStats 
+import {
+  User,
+  CreateUserData,
+  UpdateUserData,
+  ApiResponse,
+  PaginatedResponse,
+  UserFilters,
+  UserStats
 } from '../types/user';
 
 /**
@@ -20,7 +20,7 @@ export const userService = {
   async getUsers(filters: UserFilters = {}): Promise<PaginatedResponse<User>> {
     try {
       const params = new URLSearchParams();
-      
+
       if (filters.search) params.append('search', filters.search);
       if (filters.role) params.append('role', filters.role);
       if (filters.active !== undefined) params.append('active', filters.active.toString());
@@ -29,7 +29,7 @@ export const userService = {
 
       const queryString = params.toString();
       const url = `/users${queryString ? `?${queryString}` : ''}`;
-      
+
       return await api.get<PaginatedResponse<User>>(url);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -40,7 +40,7 @@ export const userService = {
   /**
    * Get user by ID (Admin only)
    */
-  async getUserById(id: number): Promise<User> {
+  async getUserById(id: string): Promise<User> {
     try {
       const response = await api.get<ApiResponse<User>>(`/users/${id}`);
       return response.data;
@@ -66,7 +66,7 @@ export const userService = {
   /**
    * Update user (Admin only)
    */
-  async updateUser(id: number, userData: UpdateUserData): Promise<User> {
+  async updateUser(id: string, userData: UpdateUserData): Promise<User> {
     try {
       const response = await api.put<ApiResponse<User>>(`/users/${id}`, userData);
       return response.data;
@@ -79,7 +79,7 @@ export const userService = {
   /**
    * Delete user (Admin only)
    */
-  async deleteUser(id: number): Promise<void> {
+  async deleteUser(id: string): Promise<void> {
     try {
       await api.delete(`/users/${id}`);
     } catch (error) {
@@ -91,7 +91,7 @@ export const userService = {
   /**
    * Toggle user status (Admin only)
    */
-  async toggleUserStatus(id: number, active: boolean): Promise<User> {
+  async toggleUserStatus(id: string, active: boolean): Promise<User> {
     try {
       const response = await api.patch<ApiResponse<User>>(`/users/${id}/status`, { active });
       return response.data;
