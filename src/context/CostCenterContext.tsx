@@ -37,16 +37,16 @@ export const CostCenterProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     loadCostCenters();
   }, []);
 
+  const value = React.useMemo(() => ({
+    selectedCostCenterId,
+    costCenters,
+    loading,
+    setSelectedCostCenterId,
+    loadCostCenters,
+  }), [selectedCostCenterId, costCenters, loading]);
+
   return (
-    <CostCenterContext.Provider
-      value={{
-        selectedCostCenterId,
-        costCenters,
-        loading,
-        setSelectedCostCenterId,
-        loadCostCenters,
-      }}
-    >
+    <CostCenterContext.Provider value={value}>
       {children}
     </CostCenterContext.Provider>
   );

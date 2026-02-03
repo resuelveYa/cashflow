@@ -22,6 +22,8 @@ import { FinancialAggregationService } from '../../services/financialAggregation
 import { factoringService } from '../../services/factoringService';
 import FileInput from '../../components/form/input/FileInput';
 import RecentFinancialTable from '../../components/tables/RecentFinantialTable';
+import QuickEntryModal from '../../components/modals/QuickEntryModal';
+import { Plus } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTenant } from '../../context/TenantContext';
 
@@ -48,6 +50,7 @@ const CostsIndex = () => {
   const [showDebug, setShowDebug] = useState(false);
   const [showEmptyCategories, setShowEmptyCategories] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('overview');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Estados de filtros - simplificados a solo año y centro de costo
   const [filters, setFilters] = useState<CostsFilters>({
@@ -157,7 +160,7 @@ const CostsIndex = () => {
         // **2. GENERAR PERÍODOS**
         let periodData: FinancialPeriod[] = [];
         const selectedYear = parseInt(filters.year);
-        
+
         if (filters.periodType === 'weekly') {
           periodData = generateWeekPeriods(selectedYear);
         } else if (filters.periodType === 'monthly') {
@@ -171,7 +174,7 @@ const CostsIndex = () => {
             label: (selectedYear - 4 + i).toString()
           }));
         }
-        
+
         setPeriods(periodData);
         console.log('✅ Periods generated:', periodData);
 
@@ -328,11 +331,11 @@ const CostsIndex = () => {
   // **FILE UPLOAD HANDLER** (mantener funcionalidad existente)
   const handleFileUpload = async (file: File) => {
     if (!file) return;
-    
+
     try {
       setUploadStatus('uploading');
       setUploadProgress(0);
-      
+
       // Simulate upload progress
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => {
@@ -343,27 +346,27 @@ const CostsIndex = () => {
           return prev + 10;
         });
       }, 300);
-      
+
       // Simulate file processing - in real implementation, call API
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       // Complete upload
       clearInterval(progressInterval);
       setUploadProgress(100);
       setUploadStatus('success');
-      
+
       // Reset after delay
       setTimeout(() => {
         setUploadStatus('idle');
         setUploadProgress(0);
       }, 1500);
-      
+
       console.log('File processed:', file);
-      
+
     } catch (err) {
       console.error('Error uploading file:', err);
       setUploadStatus('error');
-      
+
       setTimeout(() => {
         setUploadStatus('idle');
         setUploadProgress(0);
@@ -664,7 +667,16 @@ const CostsIndex = () => {
 
   return (
     <div className="w-full px-4 py-6">
-      <PageBreadcrumb pageTitle={getTitle()} titleSize="2xl" />
+      <div className="flex items-center justify-between mb-6">
+        <PageBreadcrumb pageTitle={getTitle()} titleSize="2xl" />
+        <Button
+          onClick={() => setIsModalOpen(true)}
+          className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
+        >
+          <Plus size={18} />
+          Ingresar Egreso
+        </Button>
+      </div>
 
       {/* **FILTROS USANDO FilterPanel CON BOTÓN DE BÚSQUEDA** */}
       <ComponentCard title="Filtros de Costos" className="mb-6">
@@ -738,6 +750,16 @@ const CostsIndex = () => {
       <div className="mt-4">
         {renderTabContent()}
       </div>
+
+      <QuickEntryModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        type="expense"
+        onSuccess={() => {
+          // Trigger refresh of costs data
+          setFilters(prev => ({ ...prev }));
+        }}
+      />
     </div>
   );
 };

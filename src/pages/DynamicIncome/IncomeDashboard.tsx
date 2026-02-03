@@ -13,7 +13,10 @@ import TypesDetailTable from '../../components/Dashboard/TypesDetailTable';
 import CategoryDetailTable from '../../components/Dashboard/CategoryDetailTable';
 import PeriodTable from '../../components/Dashboard/PeriodTable';
 import Tabs from '../../components/Dashboard/Tabs';
+import QuickEntryModal from '../../components/modals/QuickEntryModal';
 import type { DashboardSummary, TypeSummary, CategorySummary, CashFlowPeriod } from '../../types/dashboard';
+import Button from '../../components/ui/button/Button';
+import { Plus } from 'lucide-react';
 
 export default function IncomeDashboard() {
   const { selectedCostCenterId } = useCostCenter();
@@ -26,15 +29,12 @@ export default function IncomeDashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month' | 'quarter' | 'year'>('month');
   const [dateRange, setDateRange] = useState(getFullYearDateRange());
   const [activeTab, setActiveTab] = useState('overview');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Consolidar carga inicial y recargas por filtros
   useEffect(() => {
     loadDashboardData();
-  }, []);
-
-  // Recargar datos cuando cambia el período seleccionado o el centro de costo
-  useEffect(() => {
-    loadDashboardData();
-  }, [selectedPeriod, selectedCostCenterId]);
+  }, [selectedPeriod, selectedCostCenterId, dateRange.date_from, dateRange.date_to]);
 
   const loadDashboardData = async () => {
     setLoading(true);
@@ -94,74 +94,90 @@ export default function IncomeDashboard() {
           <span className="text-sm text-gray-500 dark:text-gray-400 pb-0.5">
             · Análisis detallado de ingresos por tipo, categoría y período
           </span>
+          <div className="ml-auto">
+            <Button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+            >
+              <Plus size={18} />
+              Ingresar Ingreso
+            </Button>
+          </div>
         </div>
 
-      {/* Tabs */}
-      <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} color="green" />
+        {/* Tabs */}
+        <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} color="green" />
 
-      {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-        </div>
-      ) : (
-        <>
-          {/* Tab 1: Resumen General */}
-          {activeTab === 'overview' && (
-            <div className="space-y-6">
-              {/* KPI Cards - Sin filtros de período */}
-              <KPICards summary={summary} color="green" />
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+          </div>
+        ) : (
+          <>
+            {/* Tab 1: Resumen General */}
+            {activeTab === 'overview' && (
+              <div className="space-y-6">
+                {/* KPI Cards - Sin filtros de período */}
+                <KPICards summary={summary} color="green" />
 
-              {/* Gráficos principales - Grid 2 columnas */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Gráfico de Pie - Distribución por Tipo */}
-                <PieChartCard data={byType} title="Distribución por Tipo" color="green" />
+                {/* Gráficos principales - Grid 2 columnas */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Gráfico de Pie - Distribución por Tipo */}
+                  <PieChartCard data={byType} title="Distribución por Tipo" color="green" />
 
-                {/* Treemap - Distribución por Tipo y Categoría */}
-                <TreemapCard data={byCategory} title="Distribución por Categorías" color="green" />
+                  {/* Treemap - Distribución por Tipo y Categoría */}
+                  <TreemapCard data={byCategory} title="Distribución por Categorías" color="green" />
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Tab 2: Por Período */}
-          {activeTab === 'periods' && (
-            <div className="space-y-6">
-              {/* Filtros de Período */}
-              <FilterBar
-                selectedPeriod={selectedPeriod}
-                setSelectedPeriod={handlePeriodChange}
-                dateRange={dateRange}
-                setDateRange={setDateRange}
-                onRefresh={loadDashboardData}
-                color="green"
-              />
+            {/* Tab 2: Por Período */}
+            {activeTab === 'periods' && (
+              <div className="space-y-6">
+                {/* Filtros de Período */}
+                <FilterBar
+                  selectedPeriod={selectedPeriod}
+                  setSelectedPeriod={handlePeriodChange}
+                  dateRange={dateRange}
+                  setDateRange={setDateRange}
+                  onRefresh={loadDashboardData}
+                  color="green"
+                />
 
-              {/* Tabla de categorías por período */}
-              <PeriodTable
-                data={cashFlow}
-                categories={byCategory}
-                categoryPeriodData={categoryByPeriod}
-                color="green"
-                period={selectedPeriod}
-              />
-            </div>
-          )}
+                {/* Tabla de categorías por período */}
+                <PeriodTable
+                  data={cashFlow}
+                  categories={byCategory}
+                  categoryPeriodData={categoryByPeriod}
+                  color="green"
+                  period={selectedPeriod}
+                />
+              </div>
+            )}
 
-          {/* Tab 3: Por Tipo */}
-          {activeTab === 'types' && (
-            <div className="space-y-6">
-              <TypesDetailTable data={byType} color="green" />
-            </div>
-          )}
+            {/* Tab 3: Por Tipo */}
+            {activeTab === 'types' && (
+              <div className="space-y-6">
+                <TypesDetailTable data={byType} color="green" />
+              </div>
+            )}
 
-          {/* Tab 4: Por Categoría */}
-          {activeTab === 'categories' && (
-            <div className="space-y-6">
-              <CategoryDetailTable data={byCategory} color="green" />
-            </div>
-          )}
-        </>
-      )}
+            {/* Tab 4: Por Categoría */}
+            {activeTab === 'categories' && (
+              <div className="space-y-6">
+                <CategoryDetailTable data={byCategory} color="green" />
+              </div>
+            )}
+          </>
+        )}
       </div>
+
+      <QuickEntryModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        type="income"
+        onSuccess={loadDashboardData}
+      />
     </div>
   );
 }

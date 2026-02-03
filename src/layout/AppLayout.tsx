@@ -16,7 +16,7 @@ const LayoutContent: React.FC = () => {
     <div className="flex min-h-screen">
       {/* Sidebar - debe mantenerse como componente separado */}
       <AppSidebar />
-      
+
       {/* Contenedor principal - con margen ajustado */}
       <div
         className={`w-full min-h-screen transition-all duration-300 ease-in-out
@@ -26,16 +26,16 @@ const LayoutContent: React.FC = () => {
         <div className="sticky top-0 w-full z-30 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
           <AppHeader />
         </div>
-        
+
         {/* Contenido principal */}
         <div className="w-full">
           <Outlet />
         </div>
       </div>
-      
+
       {/* Backdrop - sólo visible cuando el sidebar móvil está abierto */}
       {isMobileOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={handleBackdropClick}
         />
@@ -46,9 +46,7 @@ const LayoutContent: React.FC = () => {
 
 const AppLayout: React.FC = () => {
   return (
-    <SidebarProvider>
-      <LayoutContent />
-    </SidebarProvider>
+    <LayoutContent />
   );
 };
 

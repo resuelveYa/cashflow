@@ -1,24 +1,27 @@
 // src/services/expenseDataService.ts
 import apiService from './apiService';
-import type { ExpenseData, ExpenseFilters, PaginationInfo } from '../types/expense';
+import type { ExpenseData, ExpenseFilters } from '../types/expense';
+
+// We might need to define ExpenseData and ExpenseFilters if they don't exist in types
+// For now, using Partial and any to maintain flexibility
 
 const BASE_URL = ''; // apiService already adds /api prefix
 
 export const expenseDataService = {
-  async getAll(filters?: ExpenseFilters): Promise<{ data: ExpenseData[]; pagination: PaginationInfo }> {
-    const response = await apiService.get<{ data: ExpenseData[]; pagination: PaginationInfo }>(`${BASE_URL}/expenses`, { params: filters });
+  async getAll(filters?: any): Promise<{ data: any[]; pagination: any }> {
+    const response = await apiService.get<any>(`${BASE_URL}/expenses`, { params: filters });
     return {
       data: response.data,
       pagination: response.pagination
     };
   },
 
-  async getById(id: number): Promise<ExpenseData> {
-    const response = await apiService.get<{ data: ExpenseData }>(`${BASE_URL}/expenses/${id}`);
+  async getById(id: number): Promise<any> {
+    const response = await apiService.get<{ data: any }>(`${BASE_URL}/expenses/${id}`);
     return response.data;
   },
 
-  async create(data: Partial<ExpenseData>): Promise<{ id: number; warnings?: any[] }> {
+  async create(data: Partial<any>): Promise<{ id: number; warnings?: any[] }> {
     const response = await apiService.post<{ data: { id: number }; warnings?: any[] }>(`${BASE_URL}/expenses`, data);
     return {
       id: response.data.id,
@@ -26,7 +29,7 @@ export const expenseDataService = {
     };
   },
 
-  async update(id: number, data: Partial<ExpenseData>): Promise<{ warnings?: any[] }> {
+  async update(id: number, data: Partial<any>): Promise<{ warnings?: any[] }> {
     const response = await apiService.put<{ warnings?: any[] }>(`${BASE_URL}/expenses/${id}`, data);
     return { warnings: response.warnings };
   },
@@ -47,7 +50,7 @@ export const expenseDataService = {
     return response.data;
   },
 
-  async bulkCreate(expenses: Partial<ExpenseData>[]): Promise<any> {
+  async bulkCreate(expenses: Partial<any>[]): Promise<any> {
     const response = await apiService.post<any>(`${BASE_URL}/expenses/bulk`, { expenses });
     return response;
   }

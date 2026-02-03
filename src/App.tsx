@@ -9,6 +9,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { SidebarProvider } from "./context/SidebarContext";
 import { CostCenterProvider } from "./context/CostCenterContext";
 import { ErrorBoundary } from "./components/common/ErrorBoundary";
+import { HelmetProvider } from "react-helmet-async";
 import NotFound from "./pages/OtherPage/NotFound";
 import UserProfiles from "./pages/UserProfiles";
 import Videos from "./pages/UiElements/Videos";
@@ -74,6 +75,8 @@ function LoadingScreen() {
   );
 }
 
+import { Toaster } from 'sonner';
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -107,60 +110,63 @@ export default function App() {
   }
 
   return (
-    <ThemeProvider>
-      <SupabaseTokenProvider session={session} />
-      <Router>
-        <AuthProvider>
-          <TenantProvider>
-            <SidebarProvider>
-              <CostCenterProvider>
-                <ErrorBoundary>
-                  <ScrollToTop />
-                  <Routes>
-                    <Route element={<AppLayout />}>
-                      <Route path="/" element={<ConsolidatedHome />} />
-                      <Route path="/cash-flow" element={<CashFlow />} />
-                      <Route path="/budget-analysis" element={<BudgetAnalyzer />} />
-                      {/* ... (rest of routes) */}
-                      <Route path="/costos" element={<EgresossIndex />} />
-                      <Route path="/costos/index" element={<EgresossIndex />} />
-                      <Route path="/costos/cotizaciones" element={<Cotizaciones />} />
-                      <Route path="/costos/subcontratos-credito" element={<SubcontratosCredito />} />
-                      <Route path="/costos/subcontratos-contado" element={<SubcontratosContado />} />
-                      <Route path="/costos/imprevistos" element={<GastosImprevistos />} />
-                      <Route path="/centros-costo" element={<CostCentersIndex />} />
-                      <Route path="/ingresos/resumen" element={<IncomeDashboard />} />
-                      <Route path="/ingresos/tipos" element={<IncomeTypesIndex />} />
-                      <Route path="/ingresos/datos/:typeName" element={<IncomeDataList />} />
-                      <Route path="/ingresos/datos/nuevo" element={<IncomeDataForm />} />
-                      <Route path="/ingresos/datos/:id/editar" element={<IncomeDataForm />} />
-                      <Route path="/egresos/resumen" element={<ExpenseDashboard />} />
-                      <Route path="/egresos/tipos" element={<ExpenseTypesIndex />} />
-                      <Route path="/egresos/datos/:typeName" element={<ExpenseDataList />} />
-                      <Route path="/egresos/datos/nuevo" element={<ExpenseDataForm />} />
-                      <Route path="/egresos/datos/:id/editar" element={<ExpenseDataForm />} />
-                      <Route path="/profile" element={<UserProfiles />} />
-                      <Route path="/calendar" element={<Calendar />} />
-                      <Route path="/blank" element={<Blank />} />
-                      <Route path="/form-elements" element={<FormElements />} />
-                      <Route path="/basic-tables" element={<BasicTables />} />
-                      <Route path="/alerts" element={<Alerts />} />
-                      <Route path="/avatars" element={<Avatars />} />
-                      <Route path="/badge" element={<Badges />} />
-                      <Route path="/buttons" element={<Buttons />} />
-                      <Route path="/images" element={<Images />} />
-                      <Route path="/videos" element={<Videos />} />
-                      <Route path="/line-chart" element={<LineChart />} />
-                      <Route path="/bar-chart" element={<BarChart />} />
-                    </Route>
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </ErrorBoundary>
-              </CostCenterProvider>
-            </SidebarProvider>
-          </TenantProvider>
-        </AuthProvider>
-      </Router>
-    </ThemeProvider>
+    <HelmetProvider>
+      <ThemeProvider>
+        <SupabaseTokenProvider session={session} />
+        <Toaster position="top-right" richColors />
+        <Router>
+          <AuthProvider>
+            <TenantProvider>
+              <SidebarProvider>
+                <CostCenterProvider>
+                  <ErrorBoundary>
+                    <ScrollToTop />
+                    <Routes>
+                      <Route element={<AppLayout />}>
+                        <Route path="/" element={<ConsolidatedHome />} />
+                        <Route path="/cash-flow" element={<CashFlow />} />
+                        <Route path="/budget-analysis" element={<BudgetAnalyzer />} />
+                        {/* ... (rest of routes) */}
+                        <Route path="/costos" element={<EgresossIndex />} />
+                        <Route path="/costos/index" element={<EgresossIndex />} />
+                        <Route path="/costos/cotizaciones" element={<Cotizaciones />} />
+                        <Route path="/costos/subcontratos-credito" element={<SubcontratosCredito />} />
+                        <Route path="/costos/subcontratos-contado" element={<SubcontratosContado />} />
+                        <Route path="/costos/imprevistos" element={<GastosImprevistos />} />
+                        <Route path="/centros-costo" element={<CostCentersIndex />} />
+                        <Route path="/ingresos/resumen" element={<IncomeDashboard />} />
+                        <Route path="/ingresos/tipos" element={<IncomeTypesIndex />} />
+                        <Route path="/ingresos/datos/:typeName" element={<IncomeDataList />} />
+                        <Route path="/ingresos/datos/nuevo" element={<IncomeDataForm />} />
+                        <Route path="/ingresos/datos/:id/editar" element={<IncomeDataForm />} />
+                        <Route path="/egresos/resumen" element={<ExpenseDashboard />} />
+                        <Route path="/egresos/tipos" element={<ExpenseTypesIndex />} />
+                        <Route path="/egresos/datos/:typeName" element={<ExpenseDataList />} />
+                        <Route path="/egresos/datos/nuevo" element={<ExpenseDataForm />} />
+                        <Route path="/egresos/datos/:id/editar" element={<ExpenseDataForm />} />
+                        <Route path="/profile" element={<UserProfiles />} />
+                        <Route path="/calendar" element={<Calendar />} />
+                        <Route path="/blank" element={<Blank />} />
+                        <Route path="/form-elements" element={<FormElements />} />
+                        <Route path="/basic-tables" element={<BasicTables />} />
+                        <Route path="/alerts" element={<Alerts />} />
+                        <Route path="/avatars" element={<Avatars />} />
+                        <Route path="/badge" element={<Badges />} />
+                        <Route path="/buttons" element={<Buttons />} />
+                        <Route path="/images" element={<Images />} />
+                        <Route path="/videos" element={<Videos />} />
+                        <Route path="/line-chart" element={<LineChart />} />
+                        <Route path="/bar-chart" element={<BarChart />} />
+                      </Route>
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </ErrorBoundary>
+                </CostCenterProvider>
+              </SidebarProvider>
+            </TenantProvider>
+          </AuthProvider>
+        </Router>
+      </ThemeProvider>
+    </HelmetProvider>
   );
 }
