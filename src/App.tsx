@@ -83,18 +83,40 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }: { data: { session: Session | null } }) => {
+    console.log('[App] Initializing auth check...');
+
+    // Set a timeout to force stop loading if Supabase doesn't respond quickly
+    const timeoutId = setTimeout(() => {
+      if (loading) {
+        console.warn('[App] Session check timed out, forcing stop loading');
+        setLoading(false);
+      }
+    }, 5000);
+
+    supabase.auth.getSession().then(({ data: { session }, error }: { data: { session: Session | null }, error: any }) => {
+      console.log('[App] Session check complete:', session ? 'Found session' : 'No session');
+      if (error) console.error('[App] Session error:', error);
+
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      clearTimeout(timeoutId);
+    }).catch((err: any) => {
+      console.error('[App] Unexpected session check error:', err);
+      setLoading(false);
+      clearTimeout(timeoutId);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
+      console.log('[App] Auth state change:', event, session ? 'Session active' : 'No session');
       setSession(session);
       setUser(session?.user ?? null);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   if (loading) {
