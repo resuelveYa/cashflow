@@ -293,14 +293,14 @@ export default function QuickEntryModal({ isOpen, onClose, type, onSuccess }: Qu
 
       toast.error(errorMessage);
     } finally {
-      setLoading(false);
+      setLoadingTypes(false);
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[50] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50">
@@ -381,13 +381,13 @@ export default function QuickEntryModal({ isOpen, onClose, type, onSuccess }: Qu
                 <div className="space-y-3">
                   <Select
                     options={[
-                      { value: '', label: 'Seleccionar...' },
                       ...costCenters.map(cc => ({ value: cc.id.toString(), label: cc.name })),
                       { value: 'new', label: '+ Otro (Crear nuevo...)' }
                     ]}
                     value={formData.cost_center_id}
                     onChange={(val) => handleChange('cost_center_id', val)}
                     isLoading={loadingData}
+                    placeholder="Seleccionar..."
                   />
 
                   {formData.cost_center_id === 'new' && (

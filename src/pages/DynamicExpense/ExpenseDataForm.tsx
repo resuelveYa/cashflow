@@ -3,7 +3,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { expenseTypeService } from '@/services/expenseTypeService';
 import { expenseDataService } from '@/services/expenseDataService';
+import { getCostCenters, CostCenter } from '@/services/costCenterService';
 import DatePicker from '@/components/form/date-picker';
+import CurrencyInput from '@/components/form/input/CurrencyInput';
+import Select from '@/components/form/Select';
 import type { ExpenseType, ExpenseData, ExpenseCategory, ExpenseStatus } from '@/types/expense';
 
 export default function ExpenseDataForm() {
@@ -22,6 +25,8 @@ export default function ExpenseDataForm() {
   const [expenseType, setExpenseType] = useState<ExpenseType | null>(null);
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
   const [statuses, setStatuses] = useState<ExpenseStatus[]>([]);
+  const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
+  const [loadingCC, setLoadingCC] = useState(false);
 
   const [formData, setFormData] = useState<Partial<ExpenseData>>({
     name: '',
@@ -69,6 +74,15 @@ export default function ExpenseDataForm() {
         setStatuses(stats);
       } else {
         setError('Debe especificar un tipo de egreso');
+      }
+
+      // Always load cost centers
+      try {
+        setLoadingCC(true);
+        const ccs = await getCostCenters();
+        setCostCenters(ccs);
+      } finally {
+        setLoadingCC(false);
       }
     } catch (err: any) {
       setError(err.message || 'Error cargando datos');
@@ -187,12 +201,10 @@ export default function ExpenseDataForm() {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Monto {expenseType?.required_amount && <span className="text-red-500">*</span>}
               </label>
-              <input
-                type="number"
-                step="0.01"
-                value={formData.amount || ''}
-                onChange={(e) => handleChange('amount', parseFloat(e.target.value))}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 dark:bg-gray-700 dark:text-white"
+              <CurrencyInput
+                value={formData.amount?.toString() || ''}
+                onChange={(val) => handleChange('amount', val ? parseFloat(val) : 0)}
+                className="w-full"
                 required={expenseType?.required_amount}
               />
             </div>
@@ -255,6 +267,20 @@ export default function ExpenseDataForm() {
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Cost Center */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Centro de Costo (Opcional)
+            </label>
+            <Select
+              options={costCenters.map(cc => ({ value: cc.id.toString(), label: cc.name }))}
+              value={formData.cost_center_id?.toString() || ''}
+              onChange={(val) => handleChange('cost_center_id', val ? Number(val) : null)}
+              isLoading={loadingCC}
+              placeholder="Seleccionar..."
+            />
           </div>
 
           {/* Payment Method */}

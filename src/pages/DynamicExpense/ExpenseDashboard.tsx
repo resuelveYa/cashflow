@@ -13,6 +13,9 @@ import TypesDetailTable from '../../components/Dashboard/TypesDetailTable';
 import CategoryDetailTable from '../../components/Dashboard/CategoryDetailTable';
 import PeriodTable from '../../components/Dashboard/PeriodTable';
 import Tabs from '../../components/Dashboard/Tabs';
+import QuickEntryModal from '../../components/modals/QuickEntryModal';
+import Button from '../../components/ui/button/Button';
+import { Plus } from 'lucide-react';
 import type { DashboardSummary, TypeSummary, CategorySummary, CashFlowPeriod } from '../../types/dashboard';
 
 export default function ExpenseDashboard() {
@@ -26,6 +29,7 @@ export default function ExpenseDashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month' | 'quarter' | 'year'>('month');
   const [dateRange, setDateRange] = useState(getFullYearDateRange());
   const [activeTab, setActiveTab] = useState('overview');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Consolidar carga inicial y recargas por filtros
   useEffect(() => {
@@ -91,6 +95,15 @@ export default function ExpenseDashboard() {
           <span className="text-sm text-gray-500 dark:text-gray-400 pb-0.5">
             · Análisis detallado de egresos por tipo, categoría y período
           </span>
+          <div className="ml-auto">
+            <Button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
+            >
+              <Plus size={18} />
+              Ingresar Egreso
+            </Button>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -159,6 +172,13 @@ export default function ExpenseDashboard() {
           </>
         )}
       </div>
+
+      <QuickEntryModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        type="expense"
+        onSuccess={loadDashboardData}
+      />
     </div>
   );
 }
