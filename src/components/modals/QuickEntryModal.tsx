@@ -224,8 +224,8 @@ export default function QuickEntryModal({ isOpen, onClose, type, onSuccess }: Qu
         return isNaN(parsed) ? undefined : parsed;
       };
 
-      if (!formData.name || !formData.amount || !formData.date || (formData.type_id !== '' && formData.type_id !== 'new' && isNaN(finalTypeId))) {
-        toast.error('Por favor completa los campos obligatorios');
+      if (!formData.name || !formData.amount || !formData.date || !formData.type_id || (formData.type_id !== 'new' && isNaN(finalTypeId))) {
+        toast.error('Por favor completa todos los campos obligatorios, incluyendo el tipo');
         setLoading(false);
         return;
       }
@@ -406,7 +406,7 @@ export default function QuickEntryModal({ isOpen, onClose, type, onSuccess }: Qu
             {/* Categorization */}
             <div className="space-y-4">
               <div>
-                <Label>Tipo de {type === 'income' ? 'Ingreso' : 'Egreso'} (Opcional)</Label>
+                <Label>Tipo de {type === 'income' ? 'Ingreso' : 'Egreso'}</Label>
                 <div className="space-y-3">
                   <Select
                     options={[
