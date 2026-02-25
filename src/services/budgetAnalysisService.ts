@@ -162,7 +162,7 @@ export const budgetAnalysisService = {
    * Genera análisis rápido sin asociar a proyecto específico
    */
   async generateQuickAnalysis(
-    projectData: ProjectData, 
+    projectData: ProjectData,
     config: AnalysisConfig = {}
   ): Promise<AnalysisResponse> {
     try {
@@ -174,13 +174,13 @@ export const budgetAnalysisService = {
       console.log('🚀 Generando análisis rápido:', requestData);
 
       const response = await api.post<ApiResponse<AnalysisResponse>>('/budget-analysis/quick', requestData);
-      
+
       console.log('✅ Análisis recibido:', response.data);
-      
+
       return response.data;
     } catch (error: any) {
       console.error('❌ Error en análisis rápido:', error);
-      
+
       if (error.response?.status === 429) {
         throw new Error('Límite de análisis alcanzado. Intente nuevamente en unos minutos.');
       } else if (error.response?.status === 503) {
@@ -188,7 +188,7 @@ export const budgetAnalysisService = {
       } else if (error.response?.status === 400) {
         throw new Error(error.response.data?.message || 'Datos del proyecto inválidos.');
       }
-      
+
       throw new Error('Error generando análisis presupuestario');
     }
   },
@@ -211,11 +211,11 @@ export const budgetAnalysisService = {
       return response.data;
     } catch (error: any) {
       console.error('Error en análisis de proyecto:', error);
-      
+
       if (error.response?.status === 404) {
         throw new Error('Proyecto no encontrado');
       }
-      
+
       throw new Error('Error generando análisis del proyecto');
     }
   },
@@ -228,13 +228,16 @@ export const budgetAnalysisService = {
     config: PdfAnalysisConfig = {}
   ): Promise<PdfAnalysisResult> {
     try {
-      // Validar archivo
+      // Validar archivo (PDF, Excel o CAD)
       if (!file) {
-        throw new Error('Archivo PDF es requerido');
+        throw new Error('Archivo es requerido');
       }
 
-      if (file.type !== 'application/pdf') {
-        throw new Error('Solo se permiten archivos PDF');
+      const allowedExtensions = ['.pdf', '.xlsx', '.dwg', '.dxf'];
+      const fileExt = file.name.slice((file.name.lastIndexOf(".") - 1 >>> 0) + 2).toLowerCase();
+
+      if (!allowedExtensions.includes(`.${fileExt}`)) {
+        throw new Error('Solo se permiten archivos PDF, Excel o CAD (.dwg, .dxf)');
       }
 
       if (file.size > 20 * 1024 * 1024) {
@@ -258,7 +261,7 @@ export const budgetAnalysisService = {
       try {
         const calculateTimeout = (fileSizeBytes: number): number => {
           const sizeMB = fileSizeBytes / (1024 * 1024);
-          
+
           if (sizeMB < 5) {
             return 120000;
           } else if (sizeMB < 15) {
@@ -270,7 +273,7 @@ export const budgetAnalysisService = {
 
         // Usar tipo any para la respuesta inicial para manejar diferentes estructuras
         const response: any = await api.postFormData(
-          '/budget-analysis/pdf', 
+          '/budget-analysis/pdf',
           formData,
           {
             timeout: calculateTimeout(file.size),
@@ -345,7 +348,7 @@ export const budgetAnalysisService = {
         // 🔥 VALIDACIÓN DE ÉXITO: Solo fallar si explícitamente es false
         if (normalizedResponse.success === false) {
           console.error('❌ El servidor indicó fallo:', normalizedResponse.message);
-          
+
           // Caso especial: PDF sin contenido suficiente
           if (normalizedResponse.message?.includes('no contiene suficientes')) {
             const minimalResult: PdfAnalysisResult = {
@@ -380,10 +383,10 @@ export const budgetAnalysisService = {
                 originalFileName: file.name
               }
             };
-            
+
             return minimalResult;
           }
-          
+
           throw new Error(normalizedResponse.message || 'Error en el análisis del servidor');
         }
 
@@ -408,23 +411,23 @@ export const budgetAnalysisService = {
               equipment_percentage: analysisData.presupuesto_estimado?.equipment_percentage || 0,
               overhead_percentage: analysisData.presupuesto_estimado?.overhead_percentage || 15
             },
-            materiales_detallados: Array.isArray(analysisData.materiales_detallados) 
-              ? analysisData.materiales_detallados 
+            materiales_detallados: Array.isArray(analysisData.materiales_detallados)
+              ? analysisData.materiales_detallados
               : [],
-            mano_obra: Array.isArray(analysisData.mano_obra) 
-              ? analysisData.mano_obra 
+            mano_obra: Array.isArray(analysisData.mano_obra)
+              ? analysisData.mano_obra
               : [],
-            equipos_maquinaria: Array.isArray(analysisData.equipos_maquinaria) 
-              ? analysisData.equipos_maquinaria 
+            equipos_maquinaria: Array.isArray(analysisData.equipos_maquinaria)
+              ? analysisData.equipos_maquinaria
               : [],
-            proveedores_chile: Array.isArray(analysisData.proveedores_chile) 
-              ? analysisData.proveedores_chile 
+            proveedores_chile: Array.isArray(analysisData.proveedores_chile)
+              ? analysisData.proveedores_chile
               : [],
-            analisis_riesgos: Array.isArray(analysisData.analisis_riesgos) 
-              ? analysisData.analisis_riesgos 
+            analisis_riesgos: Array.isArray(analysisData.analisis_riesgos)
+              ? analysisData.analisis_riesgos
               : [],
-            recomendaciones: Array.isArray(analysisData.recomendaciones) 
-              ? analysisData.recomendaciones 
+            recomendaciones: Array.isArray(analysisData.recomendaciones)
+              ? analysisData.recomendaciones
               : ['Análisis completado exitosamente'],
             cronograma_estimado: analysisData.cronograma_estimado || 'Por determinar',
             chunks_procesados: analysisData.chunks_procesados || 0,
@@ -457,29 +460,29 @@ export const budgetAnalysisService = {
           proveedores: result.analysis.proveedores_chile.length,
           presupuestoTotal: result.analysis.presupuesto_estimado.total_clp
         });
-        
+
         // Advertencia si el análisis tiene baja confianza
-        if (result.analysis.confidence_score === 0 && 
-            result.analysis.materiales_detallados.length === 0 &&
-            result.analysis.mano_obra.length === 0) {
-          
+        if (result.analysis.confidence_score === 0 &&
+          result.analysis.materiales_detallados.length === 0 &&
+          result.analysis.mano_obra.length === 0) {
+
           console.warn('⚠️ Análisis con confianza 0% - PDF posiblemente no analizable');
-          
+
           result.analysis.recomendaciones = [
             'El PDF parece ser escaneado o contener principalmente imágenes',
             'No se pudo extraer información presupuestaria estructurada',
             'Use un PDF con texto seleccionable para mejores resultados'
           ];
-          
-          result.analysis.resumen_ejecutivo = 
+
+          result.analysis.resumen_ejecutivo =
             'Análisis limitado: El documento PDF no contiene suficiente información textual extraíble.';
         }
-        
+
         return result;
 
       } catch (apiError: any) {
         console.error('❌ Error en API call:', apiError);
-        
+
         // Manejo de errores específicos
         if (apiError.code === 'ECONNABORTED' || apiError.message?.includes('timeout')) {
           throw new Error(
@@ -507,16 +510,16 @@ export const budgetAnalysisService = {
         if (apiError.response?.status === 413) {
           throw new Error('Archivo demasiado grande. Máximo 20MB permitido.');
         } else if (apiError.response?.status === 415) {
-          throw new Error('Formato de archivo no soportado. Solo se permiten archivos PDF.');
+          throw new Error('Formato de archivo no soportado. Soporta PDF, Excel y CAD (.dwg, .dxf).');
         } else if (apiError.response?.status === 503) {
           throw new Error('Servicio de análisis temporalmente no disponible.');
         } else if (apiError.response?.status === 429) {
           throw new Error('Límite de API alcanzado. Intente nuevamente más tarde.');
         }
-        
+
         // Error genérico
         throw new Error(
-          apiError.response?.data?.message || 
+          apiError.response?.data?.message ||
           apiError.message ||
           'Error analizando archivo PDF'
         );
@@ -538,7 +541,7 @@ export const budgetAnalysisService = {
     try {
       const formData = new FormData();
       formData.append('pdfFile', file);
-      
+
       Object.entries(config).forEach(([key, value]) => {
         if (value !== undefined) {
           formData.append(key, value.toString());
@@ -546,7 +549,7 @@ export const budgetAnalysisService = {
       });
 
       const response = await api.postFormData<any>('/budget-analysis/pdf/validate', formData);
-      
+
       return {
         isValid: response.data?.file_validation?.isValid || false,
         warnings: response.data?.warnings || [],
@@ -578,11 +581,11 @@ export const budgetAnalysisService = {
       return response.data;
     } catch (error: any) {
       console.error('Error en getPdfAnalysisResult:', error);
-      
+
       if (error.response?.status === 404) {
         throw new Error('Análisis no encontrado');
       }
-      
+
       throw new Error('Error obteniendo análisis PDF');
     }
   },
@@ -599,7 +602,7 @@ export const budgetAnalysisService = {
         analysisIds,
         comparisonType
       });
-      
+
       return response.data;
     } catch (error: any) {
       console.error('Error en comparePdfAnalyses:', error);
@@ -619,7 +622,7 @@ export const budgetAnalysisService = {
       const response = await api.get<ApiPaginatedResponse<AnalysisHistoryItem>>(`/projects/${projectId}/budget-analysis/history`, {
         params: { limit, offset }
       });
-      
+
       return {
         analyses: response.data.analyses,
         total: response.data.pagination.total,
@@ -639,7 +642,7 @@ export const budgetAnalysisService = {
       const response = await api.post<ApiResponse<any>>(`/projects/${projectId}/budget-analysis/compare`, {
         analysisIds
       });
-      
+
       return response.data;
     } catch (error) {
       console.error('Error comparando análisis:', error);
@@ -692,20 +695,20 @@ export const useBudgetAnalysis = () => {
 
   const validateProject = async (projectData: ProjectData) => {
     setState(prev => ({ ...prev, isValidating: true, error: null }));
-    
+
     try {
       const result = await budgetAnalysisService.validateProject(projectData);
-      setState(prev => ({ 
-        ...prev, 
-        validationResult: result, 
-        isValidating: false 
+      setState(prev => ({
+        ...prev,
+        validationResult: result,
+        isValidating: false
       }));
       return result;
     } catch (error: any) {
-      setState(prev => ({ 
-        ...prev, 
-        error: error.message, 
-        isValidating: false 
+      setState(prev => ({
+        ...prev,
+        error: error.message,
+        isValidating: false
       }));
       throw error;
     }
@@ -713,20 +716,20 @@ export const useBudgetAnalysis = () => {
 
   const generateAnalysis = async (projectData: ProjectData, config?: AnalysisConfig) => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
-    
+
     try {
       const result = await budgetAnalysisService.generateQuickAnalysis(projectData, config);
-      setState(prev => ({ 
-        ...prev, 
-        analysis: result, 
-        isLoading: false 
+      setState(prev => ({
+        ...prev,
+        analysis: result,
+        isLoading: false
       }));
       return result;
     } catch (error: any) {
-      setState(prev => ({ 
-        ...prev, 
-        error: error.message, 
-        isLoading: false 
+      setState(prev => ({
+        ...prev,
+        error: error.message,
+        isLoading: false
       }));
       throw error;
     }
@@ -762,52 +765,52 @@ export const usePdfAnalysis = () => {
     try {
       setIsAnalyzing(true);
       setError(null);
-      
+
       const fileSizeMB = file.size / (1024 * 1024);
       const estimatedSeconds = fileSizeMB > 10 ? 120 : fileSizeMB > 5 ? 90 : 60;
       setEstimatedTime(estimatedSeconds);
-      
-      setProgress({ 
-        stage: 'uploading', 
-        progress: 0, 
-        message: `Preparando archivo (${fileSizeMB.toFixed(1)}MB) para análisis optimizado...` 
+
+      setProgress({
+        stage: 'uploading',
+        progress: 0,
+        message: `Preparando archivo (${fileSizeMB.toFixed(1)}MB) para análisis optimizado...`
       });
 
       const progressSteps: PdfAnalysisProgress[] = [
-        { 
-          stage: 'uploading', 
-          progress: 5, 
-          message: 'Enviando archivo al sistema optimizado...' 
+        {
+          stage: 'uploading',
+          progress: 5,
+          message: 'Enviando archivo al sistema optimizado...'
         },
-        { 
-          stage: 'extracting', 
-          progress: 15, 
+        {
+          stage: 'extracting',
+          progress: 15,
           message: 'Validando archivo y estimando costos...'
         },
-        { 
-          stage: 'chunking', 
-          progress: 25, 
-          message: 'Aplicando chunking inteligente...' 
+        {
+          stage: 'chunking',
+          progress: 25,
+          message: 'Aplicando chunking inteligente...'
         },
-        { 
-          stage: 'analyzing', 
-          progress: 45, 
-          message: 'Analizando con Claude Vision (proceso optimizado)...' 
+        {
+          stage: 'analyzing',
+          progress: 45,
+          message: 'Analizando con Claude Vision (proceso optimizado)...'
         },
-        { 
-          stage: 'analyzing', 
-          progress: 70, 
-          message: 'Extrayendo materiales y costos...' 
+        {
+          stage: 'analyzing',
+          progress: 70,
+          message: 'Extrayendo materiales y costos...'
         },
-        { 
-          stage: 'consolidating', 
-          progress: 90, 
-          message: 'Consolidando resultados y aplicando optimizaciones...' 
+        {
+          stage: 'consolidating',
+          progress: 90,
+          message: 'Consolidando resultados y aplicando optimizaciones...'
         }
       ];
 
       const stepDuration = (estimatedSeconds * 1000) / progressSteps.length;
-      
+
       let currentStepIndex = 0;
       const progressInterval = setInterval(() => {
         if (currentStepIndex < progressSteps.length) {
@@ -818,21 +821,21 @@ export const usePdfAnalysis = () => {
 
       try {
         const result = await budgetAnalysisService.analyzePdfBudget(file, config);
-        
+
         clearInterval(progressInterval);
-        
-        setProgress({ 
-          stage: 'complete', 
-          progress: 100, 
-          message: 'Análisis completado con optimizaciones aplicadas' 
+
+        setProgress({
+          stage: 'complete',
+          progress: 100,
+          message: 'Análisis completado con optimizaciones aplicadas'
         });
-        
+
         setTimeout(() => {
           setIsAnalyzing(false);
           setProgress(null);
           setEstimatedTime(null);
         }, 1500);
-        
+
         return result;
 
       } catch (serviceError) {
@@ -842,9 +845,9 @@ export const usePdfAnalysis = () => {
 
     } catch (err: any) {
       console.error('❌ Error en análisis PDF optimizado:', err);
-      
+
       let errorMessage = err.message;
-      
+
       if (err.message.includes('COST_LIMIT') || err.message.includes('Límite diario')) {
         errorMessage = `🛡️ Sistema de protección de costos activado\n\n${err.message}`;
       } else if (err.message.includes('timeout') || err.message.includes('Timeout')) {
@@ -858,7 +861,7 @@ export const usePdfAnalysis = () => {
       } else if (err.message.includes('413') || err.message.includes('grande')) {
         errorMessage = `📁 Archivo demasiado grande (${(file.size / 1024 / 1024).toFixed(1)}MB). Máximo permitido: 20MB con optimizaciones.`;
       }
-      
+
       setError(errorMessage);
       setIsAnalyzing(false);
       setProgress(null);
@@ -946,16 +949,19 @@ export const formatPdfAnalysisForDisplay = (analysis: PdfAnalysisResult['analysi
  */
 export const validatePdfFile = (file: File): { isValid: boolean; error?: string; warnings?: string[] } => {
   const warnings: string[] = [];
-  
-  if (file.type !== 'application/pdf') {
-    return { isValid: false, error: 'Solo se permiten archivos PDF' };
+
+  const allowedExtensions = ['.pdf', '.xlsx', '.dwg', '.dxf'];
+  const fileExt = file.name.slice((file.name.lastIndexOf(".") - 1 >>> 0) + 2).toLowerCase();
+
+  if (!allowedExtensions.includes(`.${fileExt}`)) {
+    return { isValid: false, error: 'Solo se permiten archivos PDF, Excel o CAD (.dwg, .dxf)' };
   }
-  
+
   const sizeMB = file.size / (1024 * 1024);
   if (sizeMB > 20) {
     return { isValid: false, error: 'El archivo no puede exceder 20MB (límite del sistema optimizado)' };
   }
-  
+
   if (sizeMB > 15) {
     warnings.push('Archivo muy grande: se usará modelo más eficiente para reducir costos');
   } else if (sizeMB > 10) {
@@ -963,11 +969,11 @@ export const validatePdfFile = (file: File): { isValid: boolean; error?: string;
   } else if (sizeMB > 5) {
     warnings.push('Archivo medio: procesamiento optimizado de 1-2 minutos');
   }
-  
+
   if (file.name.length > 100) {
     warnings.push('Nombre de archivo muy largo');
   }
-  
+
   return { isValid: true, warnings: warnings.length > 0 ? warnings : undefined };
 };
 
@@ -976,7 +982,7 @@ export const validatePdfFile = (file: File): { isValid: boolean; error?: string;
  */
 export const estimateProcessingTime = (file: File) => {
   const sizeMB = file.size / (1024 * 1024);
-  
+
   if (sizeMB < 2) {
     return {
       estimatedSeconds: 30,
@@ -987,7 +993,7 @@ export const estimateProcessingTime = (file: File) => {
   } else if (sizeMB < 5) {
     return {
       estimatedSeconds: 60,
-      category: 'medium' as const, 
+      category: 'medium' as const,
       description: 'Procesamiento medio con optimizaciones aplicadas',
       optimizations: ['Chunking inteligente', 'Validación de contenido', 'Control de costos']
     };
@@ -1021,12 +1027,12 @@ export const useCostMonitoring = () => {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const [costs, usage] = await Promise.all([
         budgetAnalysisService.getCostStatus(),
         budgetAnalysisService.getUsageStats()
       ]);
-      
+
       setCostStatus(costs);
       setUsageStats(usage);
     } catch (err: any) {
@@ -1039,17 +1045,17 @@ export const useCostMonitoring = () => {
 
   const canAnalyze = React.useMemo(() => {
     if (!costStatus) return true;
-    
+
     const dailyUsage = parseFloat(costStatus.global_usage?.daily?.percentage_used || '0');
     const hourlyUsage = parseFloat(costStatus.global_usage?.hourly?.percentage_used || '0');
     const userUsage = parseFloat(costStatus.user_usage?.percentage_used || '0');
-    
+
     return dailyUsage < 90 && hourlyUsage < 90 && userUsage < 90;
   }, [costStatus]);
 
   const getRemainingAnalyses = React.useMemo(() => {
     if (!costStatus) return { daily: '∞', hourly: '∞', user: '∞' };
-    
+
     return {
       daily: costStatus.global_usage?.daily?.remaining || 0,
       hourly: costStatus.global_usage?.hourly?.remaining || 0,
@@ -1059,7 +1065,7 @@ export const useCostMonitoring = () => {
 
   React.useEffect(() => {
     refreshCostStatus();
-    
+
     const interval = setInterval(refreshCostStatus, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
@@ -1087,10 +1093,10 @@ export const usePreValidation = () => {
     try {
       setIsValidating(true);
       setError(null);
-      
+
       const result = await budgetAnalysisService.validatePdfBeforeAnalysis(file, config);
       setValidationResult(result);
-      
+
       return result;
     } catch (err: any) {
       setError(err.message);

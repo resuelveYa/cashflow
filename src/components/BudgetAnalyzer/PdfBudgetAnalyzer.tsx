@@ -1,15 +1,15 @@
 // src/components/BudgetAnalyzer/PdfBudgetAnalyzer.tsx - VERSIÓN CORREGIDA SIN ERROR
 import React, { useState, useRef, useCallback } from 'react';
-import { 
+import {
   budgetAnalysisService,
-  usePdfAnalysis, 
+  usePdfAnalysis,
   validatePdfFile,
   estimateProcessingTime,
   useCostMonitoring
 } from '../../services/budgetAnalysisService';
 import type {
   PdfAnalysisConfig,
-  PdfAnalysisResult 
+  PdfAnalysisResult
 } from './types/budgetAnalysis';
 import Button from '../ui/button/Button';
 import ComponentCard from '../common/ComponentCard';
@@ -30,9 +30,9 @@ const PdfBudgetAnalyzer: React.FC<PdfBudgetAnalyzerProps> = ({
   const [analysisResult, setAnalysisResult] = useState<PdfAnalysisResult | null>(null);
   const [showResults, setShowResults] = useState(false);
   const [fileValidation, setFileValidation] = useState<{ isValid: boolean; error?: string; warnings?: string[] } | null>(null);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const { analyzePdf, isAnalyzing, progress, error, estimatedTime, resetState } = usePdfAnalysis();
   const { costStatus, canAnalyze, remainingAnalyses, refreshCostStatus } = useCostMonitoring();
 
@@ -125,7 +125,7 @@ const PdfBudgetAnalyzer: React.FC<PdfBudgetAnalyzerProps> = ({
 
     setSelectedFile(file);
     resetState();
-    
+
     if (validation.warnings && validation.warnings.length > 0) {
       console.warn('⚠️ Advertencias:', validation.warnings);
     }
@@ -151,7 +151,7 @@ const PdfBudgetAnalyzer: React.FC<PdfBudgetAnalyzerProps> = ({
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
-    
+
     const file = e.dataTransfer.files[0];
     if (file) {
       handleFileSelect(file);
@@ -169,23 +169,23 @@ const PdfBudgetAnalyzer: React.FC<PdfBudgetAnalyzerProps> = ({
     }
 
     try {
-      console.log('📄 Iniciando análisis de PDF...');
+      console.log('📄 Iniciando análisis de archivo...');
       const result = await analyzePdf(selectedFile, config);
-      
+
       console.log('📊 Resultado recibido del backend:', result);
-      
+
       // ✅ VALIDAR Y CORREGIR datos antes de guardar
       const correctedResult = {
         ...result,
         analysis: validarYCorregirAnalisis(result.analysis)
       };
-      
+
       console.log('✅ Resultado corregido:', correctedResult);
-      
+
       setAnalysisResult(correctedResult);
       setShowResults(true);
       onAnalysisComplete?.(correctedResult);
-      
+
       await refreshCostStatus();
     } catch (err) {
       console.error('❌ Error analizando PDF:', err);
@@ -195,7 +195,7 @@ const PdfBudgetAnalyzer: React.FC<PdfBudgetAnalyzerProps> = ({
   // ✅ FUNCIÓN CORREGIDA para mostrar análisis existente 
   const handleViewAnalysis = () => {
     console.log('🔍 Intentando mostrar análisis:', analysisResult);
-    
+
     if (analysisResult) {
       console.log('📄 Mostrando análisis existente:', analysisResult);
       setShowResults(true);
@@ -218,18 +218,18 @@ const PdfBudgetAnalyzer: React.FC<PdfBudgetAnalyzerProps> = ({
 
   const getFileInfo = () => {
     if (!selectedFile) return null;
-    
+
     const sizeMB = (selectedFile.size / (1024 * 1024)).toFixed(1);
     const timeEstimate = estimateProcessingTime(selectedFile);
-    
+
     return { sizeMB, timeEstimate };
   };
 
   const getConfigRecommendation = () => {
     if (!selectedFile) return null;
-    
+
     const sizeMB = selectedFile.size / (1024 * 1024);
-    
+
     if (sizeMB > 10) {
       return {
         analysisDepth: 'basic',
@@ -323,12 +323,12 @@ const PdfBudgetAnalyzer: React.FC<PdfBudgetAnalyzerProps> = ({
               <h4 className="font-medium text-green-600">Items</h4>
               <p className="text-lg font-bold text-green-800">
                 {(analysisResult.analysis.materiales_detallados?.length || 0) +
-                 (analysisResult.analysis.mano_obra?.length || 0) +
-                 (analysisResult.analysis.equipos_maquinaria?.length || 0)}
+                  (analysisResult.analysis.mano_obra?.length || 0) +
+                  (analysisResult.analysis.equipos_maquinaria?.length || 0)}
               </p>
             </div>
           </div>
-          
+
           <div className="mt-4 text-center">
             <Button
               onClick={handleViewAnalysis}
@@ -341,14 +341,14 @@ const PdfBudgetAnalyzer: React.FC<PdfBudgetAnalyzerProps> = ({
       )}
 
       {/* Upload Zone */}
-      <ComponentCard title="📄 Análisis de Presupuesto PDF" className="bg-white dark:bg-gray-800">
+      <ComponentCard title="📄 Análisis de Presupuesto (PDF/Excel/CAD)" className="bg-white dark:bg-gray-800">
         <div className="space-y-4">
           {/* Drag & Drop Zone */}
           <div
             className={`
               border-2 border-dashed rounded-lg p-8 text-center transition-colors
-              ${dragOver 
-                ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20' 
+              ${dragOver
+                ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20'
                 : 'border-gray-300 dark:border-gray-600'
               }
               ${selectedFile ? 'bg-green-50 dark:bg-green-900/20 border-green-300' : ''}
@@ -372,7 +372,7 @@ const PdfBudgetAnalyzer: React.FC<PdfBudgetAnalyzerProps> = ({
                   <p className="text-sm text-gray-500">
                     {getFileInfo()?.sizeMB} MB • Máximo 20MB
                   </p>
-                  
+
                   {getFileInfo()?.timeEstimate && (
                     <div className="mt-2">
                       <span className={`
@@ -385,7 +385,7 @@ const PdfBudgetAnalyzer: React.FC<PdfBudgetAnalyzerProps> = ({
                       </span>
                     </div>
                   )}
-                  
+
                   {fileValidation?.warnings && fileValidation.warnings.length > 0 && (
                     <div className="mt-2 text-xs text-amber-600 dark:text-amber-400">
                       ⚠️ {fileValidation.warnings[0]}
@@ -411,7 +411,7 @@ const PdfBudgetAnalyzer: React.FC<PdfBudgetAnalyzerProps> = ({
                 </div>
                 <div>
                   <p className="text-lg font-medium text-gray-900 dark:text-white">
-                    {canAnalyze ? 'Arrastra el proyecto en formato PDF aquí' : '🛡️ Sistema en modo conservación'}
+                    {canAnalyze ? 'Arrastra archivos (PDF, Excel, CAD) aquí' : '🛡️ Sistema en modo conservación'}
                   </p>
                   <p className="text-sm text-gray-500">
                     {canAnalyze ? 'o haz clic para seleccionar archivo' : 'Límites temporales alcanzados'}
@@ -425,7 +425,7 @@ const PdfBudgetAnalyzer: React.FC<PdfBudgetAnalyzerProps> = ({
                   Seleccionar Archivo
                 </Button>
                 <p className="text-xs text-gray-400">
-                  Máximo 20MB • Solo archivos PDF
+                  Máximo 20MB • PDF, Excel o CAD (.dwg, .dxf)
                 </p>
               </div>
             )}
@@ -434,7 +434,7 @@ const PdfBudgetAnalyzer: React.FC<PdfBudgetAnalyzerProps> = ({
           <input
             ref={fileInputRef}
             type="file"
-            accept=".pdf"
+            accept=".pdf,.xlsx,.dwg,.dxf"
             onChange={handleFileInputChange}
             className="hidden"
             disabled={isAnalyzing || !canAnalyze}
@@ -470,8 +470,8 @@ const PdfBudgetAnalyzer: React.FC<PdfBudgetAnalyzerProps> = ({
                       size="sm"
                       variant="outline"
                       className="mt-2 text-blue-600 border-blue-300"
-                      onClick={() => setConfig(prev => ({ 
-                        ...prev, 
+                      onClick={() => setConfig(prev => ({
+                        ...prev,
                         analysisDepth: getConfigRecommendation()?.analysisDepth as any
                       }))}
                     >
@@ -489,9 +489,9 @@ const PdfBudgetAnalyzer: React.FC<PdfBudgetAnalyzerProps> = ({
                     </label>
                     <select
                       value={config.analysisDepth}
-                      onChange={(e) => setConfig((prev: PdfAnalysisConfig) => ({ 
-                        ...prev, 
-                        analysisDepth: e.target.value as any 
+                      onChange={(e) => setConfig((prev: PdfAnalysisConfig) => ({
+                        ...prev,
+                        analysisDepth: e.target.value as any
                       }))}
                       className="w-full p-2 border rounded-md dark:bg-gray-600 dark:border-gray-500 dark:text-white"
                       disabled={isAnalyzing}
@@ -508,9 +508,9 @@ const PdfBudgetAnalyzer: React.FC<PdfBudgetAnalyzerProps> = ({
                     </label>
                     <select
                       value={config.projectType}
-                      onChange={(e) => setConfig((prev: PdfAnalysisConfig) => ({ 
-                        ...prev, 
-                        projectType: e.target.value as any 
+                      onChange={(e) => setConfig((prev: PdfAnalysisConfig) => ({
+                        ...prev,
+                        projectType: e.target.value as any
                       }))}
                       className="w-full p-2 border rounded-md dark:bg-gray-600 dark:border-gray-500 dark:text-white"
                       disabled={isAnalyzing}
@@ -530,9 +530,9 @@ const PdfBudgetAnalyzer: React.FC<PdfBudgetAnalyzerProps> = ({
                     <input
                       type="text"
                       value={config.projectLocation}
-                      onChange={(e) => setConfig((prev: PdfAnalysisConfig) => ({ 
-                        ...prev, 
-                        projectLocation: e.target.value 
+                      onChange={(e) => setConfig((prev: PdfAnalysisConfig) => ({
+                        ...prev,
+                        projectLocation: e.target.value
                       }))}
                       className="w-full p-2 border rounded-md dark:bg-gray-600 dark:border-gray-500 dark:text-white"
                       placeholder="Santiago, Chile"
@@ -545,9 +545,9 @@ const PdfBudgetAnalyzer: React.FC<PdfBudgetAnalyzerProps> = ({
                       type="checkbox"
                       id="includeProviders"
                       checked={config.includeProviders}
-                      onChange={(e) => setConfig((prev: PdfAnalysisConfig) => ({ 
-                        ...prev, 
-                        includeProviders: e.target.checked 
+                      onChange={(e) => setConfig((prev: PdfAnalysisConfig) => ({
+                        ...prev,
+                        includeProviders: e.target.checked
                       }))}
                       className="mr-2"
                       disabled={isAnalyzing}
@@ -573,7 +573,7 @@ const PdfBudgetAnalyzer: React.FC<PdfBudgetAnalyzerProps> = ({
                   🤖 Analizar con IA
                 </Button>
               )}
-              
+
               {/* ✅ BOTÓN para análisis existente */}
               {analysisResult && !isAnalyzing && (
                 <Button
@@ -583,7 +583,7 @@ const PdfBudgetAnalyzer: React.FC<PdfBudgetAnalyzerProps> = ({
                   📊 Ver Análisis Completo
                 </Button>
               )}
-              
+
               <Button
                 variant="outline"
                 onClick={handleClear}
@@ -610,7 +610,7 @@ const PdfBudgetAnalyzer: React.FC<PdfBudgetAnalyzerProps> = ({
                   </span>
                 )}
               </div>
-              
+
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-blue-800 dark:text-blue-300">
@@ -620,7 +620,7 @@ const PdfBudgetAnalyzer: React.FC<PdfBudgetAnalyzerProps> = ({
                     {progress.progress}%
                   </span>
                 </div>
-                
+
                 <div className="w-full bg-blue-200 rounded-full h-2 dark:bg-blue-800">
                   <div
                     className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
@@ -652,7 +652,7 @@ const PdfBudgetAnalyzer: React.FC<PdfBudgetAnalyzerProps> = ({
                   ✕
                 </Button>
               </div>
-              
+
               <div className="mt-4 flex gap-3 flex-wrap">
                 <Button
                   variant="outline"
