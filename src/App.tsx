@@ -33,6 +33,7 @@ import SubcontratosContado from "./pages/Costs/SubcontratosContado";
 import GastosImprevistos from "./pages/Costs/GastosImprevistos";
 import EgresossIndex from "./pages/Costs/CostsIndex";
 import { BudgetAnalyzer } from "./components/BudgetAnalyzer/BudgetAnalyzer";
+import AuthCallback from "./pages/AuthCallback";
 import IncomeTypesIndex from './pages/DynamicIncome/IncomeTypesIndex';
 import IncomeDataList from './pages/DynamicIncome/IncomeDataList';
 import IncomeDataForm from './pages/DynamicIncome/IncomeDataForm';
@@ -124,10 +125,20 @@ export default function App() {
   }
 
   if (!user) {
-    // Redirect to landing sign-in
-    const baseUrl = 'https://resuelveya.cl'
+    // Allow /auth/callback to handle its own session (token handoff from landing)
+    if (window.location.pathname === '/auth/callback') {
+      return (
+        <Router>
+          <Routes>
+            <Route path="/auth/callback" element={<AuthCallback />} />
+          </Routes>
+        </Router>
+      );
+    }
+    // Redirect unauthenticated users to landing sign-in
+    const landingBase = import.meta.env.VITE_LANDING_URL || 'http://localhost:3000'
     const redirectUrl = encodeURIComponent(window.location.origin + window.location.pathname)
-    window.location.href = `${baseUrl}/sign-in?redirect_url=${redirectUrl}`
+    window.location.href = `${landingBase}/sign-in?redirect_url=${redirectUrl}`
     return null;
   }
 
