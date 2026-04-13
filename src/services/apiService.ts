@@ -90,7 +90,7 @@ apiClient.interceptors.response.use(
           if (!token) {
             console.error('[API] 🚫 Sesión perdida o expirada de verdad. Redirigiendo...');
             const currentUrl = encodeURIComponent(window.location.href);
-            window.location.href = `https://resuelveya.cl/sign-in?redirect_url=${currentUrl}`;
+            window.location.href = `https://licitex.cl/sign-in?redirect_url=${currentUrl}`;
           } else {
             console.warn('[API] 🤔 401 recibido pero hay token activo. Posible error de permisos o expiración en backend.');
           }

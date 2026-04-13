@@ -22,7 +22,7 @@ export const ENV = {
 
   // URLs for redirects
   URLS: {
-    LANDING: import.meta.env.VITE_LANDING_URL || 'https://resuelveya.cl',
+    LANDING: import.meta.env.VITE_LANDING_URL || 'https://licitex.cl',
     APP: import.meta.env.VITE_APP_URL || window.location.origin,
   }
 };
