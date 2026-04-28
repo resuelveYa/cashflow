@@ -115,38 +115,26 @@ class ConsolidatedDashboardService {
     };
   }
 
-  async getOperationalMetrics(filters: { cost_center_id?: number } = {}): Promise<OperationalMetrics> {
-    try {
-      // api.get() retorna SOLO response.data → o sea: { data: [...] }
-      const [incomeTypes, expenseTypes, costCenters] = await Promise.all([
-        api.get<{ data: any[] }>('/income-types', { params: { only_active: true } }),
-        api.get<{ data: any[] }>('/expense-types', { params: { only_active: true } }),
-        api.get<{ data: any[] }>('/cost-centers')
-      ]);
+  /**
+   * Computes operational metrics from pre-loaded reference data.
+   * No API calls — consume from CostCenterContext instead.
+   */
+  getOperationalMetrics(
+    costCenters: any[],
+    incomeTypes: any[],
+    expenseTypes: any[],
+    filters: { cost_center_id?: number } = {}
+  ): OperationalMetrics {
+    const costCentersCount = filters.cost_center_id
+      ? 1
+      : costCenters.filter((cc: any) => cc.is_active !== false).length;
 
-      const incomeTypesArr = Array.isArray(incomeTypes.data) ? incomeTypes.data : [];
-      const expenseTypesArr = Array.isArray(expenseTypes.data) ? expenseTypes.data : [];
-      const costCentersArr = Array.isArray(costCenters.data) ? costCenters.data : [];
-
-      const costCentersCount = filters.cost_center_id
-        ? 1
-        : costCentersArr.filter((cc: any) => cc.is_active !== false).length;
-
-      return {
-        costCentersCount,
-        incomeTypesCount: incomeTypesArr.length,
-        expenseTypesCount: expenseTypesArr.length,
-        totalTransactions: 0
-      };
-    } catch (error) {
-      console.error('Error fetching operational metrics:', error);
-      return {
-        costCentersCount: 0,
-        incomeTypesCount: 0,
-        expenseTypesCount: 0,
-        totalTransactions: 0
-      };
-    }
+    return {
+      costCentersCount,
+      incomeTypesCount: incomeTypes.length,
+      expenseTypesCount: expenseTypes.length,
+      totalTransactions: 0
+    };
   }
 
   async getTopTransactions(

@@ -15,10 +15,7 @@ import {
 import { useSidebar } from "../context/SidebarContext";
 import SidebarWidget from "./SidebarWidget";
 import { Calculator, Settings, TrendingUp, TrendingDown } from "lucide-react";
-import { incomeTypeService } from "../services/incomeTypeService";
-import type { IncomeType } from "../types/income";
-import { expenseTypeService } from "../services/expenseTypeService";
-import type { ExpenseType } from "../types/expense";
+import { useCostCenter } from "../context/CostCenterContext";
 
 type NavItem = {
   name: string;
@@ -94,20 +91,11 @@ const othersItems: NavItem[] = [
 ];
 
 const AppSidebar: React.FC = () => {
-  const { isExpanded, isMobileOpen, isHovered, setIsHovered, setIsMobileOpen, refreshTrigger } = useSidebar();
+  const { isExpanded, isMobileOpen, isHovered, setIsHovered, setIsMobileOpen } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
-
-  const [openSubmenu, setOpenSubmenu] = useState<{
-    type: "main" | "others";
-    index: number;
-  } | null>(null);
-  
-  const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>({});
-  const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const [incomeTypes, setIncomeTypes] = useState<IncomeType[]>([]);
-  const [expenseTypes, setExpenseTypes] = useState<ExpenseType[]>([]);
-  const [dynamicNavItems, setDynamicNavItems] = useState<NavItem[]>(navItems);
+  // Read types from shared context — no extra API calls
+  const { incomeTypes, expenseTypes } = useCostCenter();
 
 
   const isActive = useCallback(
@@ -131,82 +119,55 @@ const AppSidebar: React.FC = () => {
   }, [setIsMobileOpen, navigate]);
 
 
-  // Load income and expense types dynamically
+  const [openSubmenu, setOpenSubmenu] = useState<{
+    type: "main" | "others";
+    index: number;
+  } | null>(null);
+
+  const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>({});
+  const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [dynamicNavItems, setDynamicNavItems] = useState<NavItem[]>(navItems);
+
+  // Rebuild dynamic nav items whenever types change (already loaded by CostCenterContext)
   useEffect(() => {
-    const loadTypes = async () => {
-      try {
-        const [incomeTypesData, expenseTypesData] = await Promise.all([
-          incomeTypeService.getAll(),
-          expenseTypeService.getAll()
-        ]);
-
-        setIncomeTypes(incomeTypesData);
-        setExpenseTypes(expenseTypesData);
-
-        // Update navItems with income and expense types
-        const updatedNavItems = navItems.map(item => {
-          if (item.name === "Ingresos") {
-            // If there are income types, show them as submenu
-            if (incomeTypesData.length > 0) {
-              return {
-                ...item,
-                path: undefined, // Remove direct path when there are subtypes
-                subItems: [
-                  {
-                    name: "Resumen",
-                    path: "/ingresos/resumen",
-                    pro: false
-                  },
-                  ...incomeTypesData.map(type => {
-                    const slug = type.name.toLowerCase().replace(/\s+/g, '_');
-                    return {
-                      name: type.name,
-                      path: `/ingresos/datos/${slug}`,
-                      pro: false
-                    };
-                  })
-                ]
-              };
-            }
-            // If no types, keep it as direct link
-            return item;
-          } else if (item.name === "Egresos") {
-            // If there are expense types, show them as submenu
-            if (expenseTypesData.length > 0) {
-              return {
-                ...item,
-                path: undefined, // Remove direct path when there are subtypes
-                subItems: [
-                  {
-                    name: "Resumen",
-                    path: "/egresos/resumen",
-                    pro: false
-                  },
-                  ...expenseTypesData.map(type => {
-                    const slug = type.name.toLowerCase().replace(/\s+/g, '_');
-                    return {
-                      name: type.name,
-                      path: `/egresos/datos/${slug}`,
-                      pro: false
-                    };
-                  })
-                ]
-              };
-            }
-            // If no types, keep it as direct link
-            return item;
-          }
-          return item;
-        });
-
-        setDynamicNavItems(updatedNavItems);
-      } catch (error) {
-        console.error('Error loading types:', error);
+    const updatedNavItems = navItems.map(item => {
+      if (item.name === "Ingresos") {
+        if (incomeTypes.length > 0) {
+          return {
+            ...item,
+            path: undefined,
+            subItems: [
+              { name: "Resumen", path: "/ingresos/resumen", pro: false },
+              ...incomeTypes.map(type => ({
+                name: type.name,
+                path: `/ingresos/datos/${type.name.toLowerCase().replace(/\s+/g, '_')}`,
+                pro: false
+              }))
+            ]
+          };
+        }
+        return item;
+      } else if (item.name === "Egresos") {
+        if (expenseTypes.length > 0) {
+          return {
+            ...item,
+            path: undefined,
+            subItems: [
+              { name: "Resumen", path: "/egresos/resumen", pro: false },
+              ...expenseTypes.map(type => ({
+                name: type.name,
+                path: `/egresos/datos/${type.name.toLowerCase().replace(/\s+/g, '_')}`,
+                pro: false
+              }))
+            ]
+          };
+        }
+        return item;
       }
-    };
-
-    loadTypes();
-  }, [refreshTrigger]);
+      return item;
+    });
+    setDynamicNavItems(updatedNavItems);
+  }, [incomeTypes, expenseTypes]);
 
   useEffect(() => {
     let submenuMatched = false;

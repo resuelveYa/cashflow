@@ -77,44 +77,34 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     features: defaultFeatures,
   });
 
-  // Función para cargar organización actual
-  const loadCurrentOrganization = async () => {
-    try {
-      setIsLoading(true);
-      const org = await getCurrentOrganization();
-      const tenant = organizationToTenant(org);
-      setCurrentTenant(tenant);
-      applyTheme(tenant.theme);
-      localStorage.setItem('currentTenant', JSON.stringify(tenant));
-    } catch (error) {
-      console.error('[TenantContext] Error loading organization:', error);
-      // Mantener el tenant actual si falla
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Función para cargar organizaciones disponibles
-  const loadAvailableOrganizations = async () => {
-    try {
-      const orgs = await getUserOrganizations();
-      const tenants = orgs.map(org => organizationToTenant({
-        id: org.id,
-        name: org.name,
-        userRole: org.role
-      }));
-      setAvailableTenants(tenants);
-    } catch (error) {
-      console.error('[TenantContext] Error loading organizations:', error);
-      setAvailableTenants([]);
-    }
-  };
-
-  // Aplicar tema
+  // Aplicar tema CSS
   const applyTheme = (theme: TenantTheme) => {
     document.documentElement.style.setProperty('--color-primary', theme.primaryColor);
     document.documentElement.style.setProperty('--color-secondary', theme.secondaryColor);
     document.documentElement.style.setProperty('--color-accent', theme.accentColor);
+  };
+
+  // Carga organización actual + lista de organizaciones en un único Promise.all
+  const loadOrganizations = async () => {
+    try {
+      setIsLoading(true);
+      const [org, orgs] = await Promise.all([
+        getCurrentOrganization(),
+        getUserOrganizations(),
+      ]);
+
+      const tenant = organizationToTenant(org);
+      setCurrentTenant(tenant);
+      applyTheme(tenant.theme);
+      localStorage.setItem('currentTenant', JSON.stringify(tenant));
+
+      const tenants = orgs.map(o => organizationToTenant({ id: o.id, name: o.name, userRole: o.role }));
+      setAvailableTenants(tenants);
+    } catch (error) {
+      console.error('[TenantContext] Error loading organizations:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Cambiar de organización
@@ -122,11 +112,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       setIsLoading(true);
       await switchOrganization(organizationId);
-
-      // Recargar la organización actual
-      await loadCurrentOrganization();
-
-      // Recargar la página para actualizar todos los datos
+      await loadOrganizations();
       window.location.reload();
     } catch (error) {
       console.error('[TenantContext] Error switching organization:', error);
@@ -139,8 +125,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Cargar datos al montar si el usuario está autenticado
   useEffect(() => {
     if (!isAuthLoading && isAuthenticated) {
-      loadCurrentOrganization();
-      loadAvailableOrganizations();
+      loadOrganizations();
     } else if (!isAuthLoading && !isAuthenticated) {
       setIsLoading(false);
     }
@@ -165,7 +150,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setCurrentTenant: updateTenant,
         availableTenants,
         isLoading,
-        refreshOrganization: loadCurrentOrganization,
+        refreshOrganization: loadOrganizations,
         switchToOrganization,
       }}
     >
