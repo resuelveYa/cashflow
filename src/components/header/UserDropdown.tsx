@@ -47,12 +47,41 @@ export default function UserDropdown() {
         onClick={toggleDropdown}
         className="flex items-center text-gray-700 dropdown-toggle dark:text-gray-400"
       >
-        <span className="mr-3 overflow-hidden rounded-full h-11 w-11">
-          {user?.avatar ? (
-            <img src={user.avatar} alt={user.name || 'User'} />
-          ) : (
-            <img src="/images/user/user-01.jpg" alt="User" />
-          )}
+        <span className="relative group mr-3 flex-shrink-0">
+          {/* Hidden file input */}
+          <input
+            id="avatar-upload"
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                // TODO: upload to storage and save URL
+                console.log('[UserDropdown] Avatar selected:', file.name);
+              }
+            }}
+          />
+          {/* Avatar image */}
+          <span className="overflow-hidden rounded-full h-11 w-11 block">
+            {user?.avatar ? (
+              <img src={user.avatar} alt={user.name || 'User'} className="w-full h-full object-cover" />
+            ) : (
+              <img src="/images/user/user-01.jpg" alt="User" className="w-full h-full object-cover" />
+            )}
+          </span>
+          {/* Camera overlay — shows on hover */}
+          <button
+            type="button"
+            title="Cambiar foto"
+            onClick={(e) => { e.stopPropagation(); document.getElementById('avatar-upload')?.click(); }}
+            className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+          </button>
         </span>
 
         <span className="block mr-1 font-medium text-theme-sm">
@@ -82,13 +111,48 @@ export default function UserDropdown() {
         onClose={closeDropdown}
         className="absolute right-0 mt-[17px] flex w-[260px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"
       >
-        <div>
-          <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            {user?.name || "Usuario"}
-          </span>
-          <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-            {user?.email || "user@example.com"}
-          </span>
+        <div className="flex items-center gap-3 pb-3 border-b border-gray-200 dark:border-gray-800">
+          {/* Avatar with upload in the dropdown */}
+          <div className="relative group flex-shrink-0">
+            <span className="overflow-hidden rounded-full h-14 w-14 block">
+              {user?.avatar ? (
+                <img src={user.avatar} alt={user.name || 'User'} className="w-full h-full object-cover" />
+              ) : (
+                <img src="/images/user/user-01.jpg" alt="User" className="w-full h-full object-cover" />
+              )}
+            </span>
+            <button
+              type="button"
+              title="Subir foto"
+              onClick={() => document.getElementById('avatar-upload')?.click()}
+              className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+            </button>
+          </div>
+          <div>
+            <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
+              {user?.name || "Usuario"}
+            </span>
+            <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
+              {user?.email || "user@example.com"}
+            </span>
+            <button
+              type="button"
+              onClick={() => document.getElementById('avatar-upload')?.click()}
+              className="mt-1 text-xs text-blue-500 hover:text-blue-700 font-medium flex items-center gap-1 transition-colors"
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              Subir foto
+            </button>
+          </div>
         </div>
 
         <ul className="flex flex-col gap-1 pt-4 pb-3 border-b border-gray-200 dark:border-gray-800">

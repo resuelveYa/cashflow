@@ -51,7 +51,16 @@ export default function AuthCallback() {
         }
       }
 
-      // No hay tokens → redirigir al login
+      // No hay tokens válidos en la URL.
+      // Verificamos si de casualidad el usuario YA está autenticado (y Supabase borró el hash o simplemente es un reingreso tonto)
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        console.log('[AuthCallback] Session already exists, redirecting silently to', next);
+        navigate(next, { replace: true });
+        return;
+      }
+
+      // No hay tokens y no hay sesión activa → redirigir al login del landing
       const landingUrl = import.meta.env.VITE_LANDING_URL || 'http://localhost:3000'
       window.location.href = `${landingUrl}/sign-in?redirect_url=${encodeURIComponent(window.location.origin + next)}`
     }

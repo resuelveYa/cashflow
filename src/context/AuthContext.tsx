@@ -43,16 +43,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check active sessions and sets the user
+    if (import.meta.env.VITE_DEV_BYPASS === 'true') {
+      const mockUser = {
+        id: 'dev-local',
+        email: 'dev@licitex.cl',
+        name: 'Dev Local',
+        role: 'admin',
+        organization_id: 'personal_local_admin',
+        firstName: 'Dev',
+        lastName: 'Local',
+        createdAt: new Date().toISOString()
+      };
+      setUser(mockUser as any);
+      setIsLoading(false);
+      return;
+    }
+
+    // App.tsx already validated the session via getUser() before mounting this context.
+    // Here we just read the current session (no extra server call) and listen for changes.
     supabase.auth.getSession().then(({ data: { session } }: { data: { session: Session | null } }) => {
       setUser(session?.user ? mapSupabaseUserToLocal(session.user) : null);
       setIsLoading(false);
     });
 
-    // Listen for changes on auth state (sign in, sign out, etc.)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
       setUser(session?.user ? mapSupabaseUserToLocal(session.user) : null);
       setIsLoading(false);
+
+      if (event === 'SIGNED_OUT') {
+        const landingUrl = import.meta.env.VITE_LANDING_URL || 'https://licitex.cl'
+        window.location.href = `${landingUrl}/sign-in?redirect_url=${encodeURIComponent(window.location.origin + window.location.pathname)}`
+      }
     });
 
     return () => subscription.unsubscribe();

@@ -404,29 +404,19 @@ const AppSidebar: React.FC = () => {
       onMouseEnter={() => !isExpanded && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="py-2 flex bg-[#3b3378] justify-center">
+      <div className="py-3 flex bg-[#1e2d4a] justify-center">
         <Link to="/">
           {isExpanded || isHovered || isMobileOpen ? (
-            <>
-              <img
-                className="dark:hidden"
-                src="/images/logo/logo_mpf.svg"
-                alt="Logo"
-                width={160}
-                height={35}
-              />
-              <img
-                className="hidden dark:block"
-                src="/images/logo/logo_mpf.svg"
-                alt="Logo"
-                width={160}
-                height={35}
-              />
-            </>
+            <img
+              src="/images/logo/licitex-full.svg"
+              alt="Licitex"
+              width={140}
+              height={35}
+            />
           ) : (
             <img
-              src="/images/logo/logo_mpf-icon.svg"
-              alt="Logo"
+              src="/images/logo/licitex-icon.svg"
+              alt="Licitex"
               width={32}
               height={32}
             />

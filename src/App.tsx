@@ -84,6 +84,18 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (import.meta.env.VITE_DEV_BYPASS === 'true') {
+      const mockUser = { id: 'dev-local', email: 'dev@licitex.cl', user_metadata: { full_name: 'Dev Local' } } as any;
+      setUser(mockUser);
+      setSession({
+        access_token: 'local-admin-bypass-token',
+        refresh_token: 'dev-bypass-refresh',
+        user: mockUser
+      } as any);
+      setLoading(false);
+      return;
+    }
+
     console.log('[App] Initializing auth check...');
 
     // Set a timeout to force stop loading if Supabase doesn't respond quickly
@@ -94,16 +106,27 @@ export default function App() {
       }
     }, 5000);
 
-    supabase.auth.getSession().then(({ data: { session }, error }: { data: { session: Session | null }, error: any }) => {
-      console.log('[App] Session check complete:', session ? 'Found session' : 'No session');
-      if (error) console.error('[App] Session error:', error);
+    // getUser() validates the token with Supabase server (vs getSession() which only reads localStorage)
+    supabase.auth.getUser().then(({ data: { user: authUser }, error }: { data: { user: any }, error: any }) => {
+      console.log('[App] Auth check complete:', authUser ? 'Authenticated' : 'Not authenticated');
+      if (error && error.message !== 'Auth session missing!') console.error('[App] Auth error:', error);
 
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-      clearTimeout(timeoutId);
+      if (authUser) {
+        // Fetch session separately to get the access_token for API calls
+        supabase.auth.getSession().then(({ data: { session } }: { data: { session: Session | null } }) => {
+          setSession(session);
+          setUser(authUser);
+          setLoading(false);
+          clearTimeout(timeoutId);
+        });
+      } else {
+        setSession(null);
+        setUser(null);
+        setLoading(false);
+        clearTimeout(timeoutId);
+      }
     }).catch((err: any) => {
-      console.error('[App] Unexpected session check error:', err);
+      console.error('[App] Unexpected auth error:', err);
       setLoading(false);
       clearTimeout(timeoutId);
     });
@@ -112,6 +135,12 @@ export default function App() {
       console.log('[App] Auth state change:', event, session ? 'Session active' : 'No session');
       setSession(session);
       setUser(session?.user ?? null);
+
+      if (event === 'SIGNED_OUT') {
+        const landingBase = import.meta.env.VITE_LANDING_URL || 'https://licitex.cl'
+        const redirectUrl = encodeURIComponent(window.location.origin + window.location.pathname)
+        window.location.href = `${landingBase}/sign-in?redirect_url=${redirectUrl}`
+      }
     });
 
     return () => {
@@ -191,6 +220,7 @@ export default function App() {
                         <Route path="/line-chart" element={<LineChart />} />
                         <Route path="/bar-chart" element={<BarChart />} />
                       </Route>
+                      <Route path="/auth/callback" element={<AuthCallback />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </ErrorBoundary>
